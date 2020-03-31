@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "esnext",
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "strict": true,
+    "noUnusedLocals": true
+  }
+}

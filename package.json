@@ -1,0 +1,20 @@
+{
+  "name": "codejar",
+  "version": "1.0.0",
+  "description": "Micro code editor",
+  "license": "MIT",
+  "repository": "antonmedv/codejar",
+  "author": "Anton Medvedev <anton@medv.io>",
+  "homepage": "https://medv.io/codejar/",
+  "main": "codejar.js",
+  "scripts": {
+    "start": "tsc -w",
+    "prepublishOnly": "tsc",
+    "size": "minify codejar.js --sourceType module | gzip-size"
+  },
+  "devDependencies": {
+    "babel-minify": "^0.5.1",
+    "gzip-size-cli": "^3.0.0",
+    "typescript": "^3.8.3"
+  }
+}
