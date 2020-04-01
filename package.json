@@ -1,5 +1,5 @@
 {
-  "name": "codejar",
+  "name": "@medv/codejar",
   "version": "1.0.0",
   "description": "Micro code editor",
   "license": "MIT",
