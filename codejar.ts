@@ -53,18 +53,18 @@ export class CodeJar {
       }
     })
 
-    on('keyup', event => {
+    on('keyup', _event => {
       debounceHighlight()
       this.recordHistory()
       if (this.callback) this.callback(this.toString())
     })
 
-    on('focus', event => {
+    on('focus', _event => {
       this.focus = true
       this.recordHistory()
     })
 
-    on('blur', event => {
+    on('blur', _event => {
       this.focus = false
     })
 
@@ -342,7 +342,7 @@ function debounce<T extends Function>(cb: T, wait: number) {
   let timeout = 0
   return (...args: any) => {
     clearTimeout(timeout)
-    timeout = setTimeout(() => cb(...args), wait)
+    timeout = window.setTimeout(() => cb(...args), wait)
   }
 }
 
