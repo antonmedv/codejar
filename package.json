@@ -9,7 +9,6 @@
   "main": "codejar.js",
   "scripts": {
     "start": "tsc -w",
-    "prepublishOnly": "tsc",
     "size": "minify codejar.js --sourceType module | gzip-size"
   },
   "devDependencies": {

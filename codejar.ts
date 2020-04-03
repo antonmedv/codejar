@@ -16,17 +16,17 @@ export class CodeJar {
     this.editor = editor
     this.highlight = highlight
     this.options = {
-      tab: '\t',
+      tab: "\t",
       ...options
     }
 
-    this.editor.setAttribute('contentEditable', 'true')
-    this.editor.setAttribute('spellcheck', 'false')
-    this.editor.style.outline = 'none'
-    this.editor.style.overflowWrap = 'break-word'
-    this.editor.style.overflowY = 'auto'
-    this.editor.style.resize = 'vertical'
-    this.editor.style.whiteSpace = 'pre-wrap'
+    this.editor.setAttribute("contentEditable", "true")
+    this.editor.setAttribute("spellcheck", "false")
+    this.editor.style.outline = "none"
+    this.editor.style.overflowWrap = "break-word"
+    this.editor.style.overflowY = "auto"
+    this.editor.style.resize = "vertical"
+    this.editor.style.whiteSpace = "pre-wrap"
 
     this.highlight(this.editor)
     const debounceHighlight = debounce(() => {
@@ -40,12 +40,12 @@ export class CodeJar {
       this.editor.addEventListener(type, fn)
     }
 
-    on('keydown', event => {
-      if (event.key === 'Enter') {
+    on("keydown", event => {
+      if (event.key === "Enter") {
         this.handleNewLine(event)
-      } else if (event.key === 'Tab') {
+      } else if (event.key === "Tab") {
         this.handleTabCharacters(event)
-      } else if (event.key === 'ArrowLeft' && event.metaKey) {
+      } else if (event.key === "ArrowLeft" && event.metaKey) {
         this.handleJumpToBeginningOfLine(event)
       } else {
         this.handleSelfClosingCharacters(event)
@@ -53,22 +53,22 @@ export class CodeJar {
       }
     })
 
-    on('keyup', _event => {
+    on("keyup", _event => {
       debounceHighlight()
       this.recordHistory()
       if (this.callback) this.callback(this.toString())
     })
 
-    on('focus', _event => {
+    on("focus", _event => {
       this.focus = true
       this.recordHistory()
     })
 
-    on('blur', _event => {
+    on("blur", _event => {
       this.focus = false
     })
 
-    on('paste', event => {
+    on("paste", event => {
       this.handlePaste(event)
       if (this.callback) this.callback(this.toString())
     })
@@ -128,7 +128,7 @@ export class CodeJar {
     let el = queue.shift()
     while (el) {
       if (el.nodeType === Node.TEXT_NODE) {
-        let len = (el.nodeValue || '').length
+        let len = (el.nodeValue || "").length
         n += len
         if (!startFound && n >= pos.start) {
           const offset = len - (n - pos.start)
@@ -172,14 +172,14 @@ export class CodeJar {
     const after = this.afterCursor()
     let [padding] = findPadding(before)
     let doublePadding = padding
-    if (before[before.length - 1] === '{') doublePadding += this.options.tab
-    let text = '\n' + doublePadding
+    if (before[before.length - 1] === "{") doublePadding += this.options.tab
+    let text = "\n" + doublePadding
     // Add extra newline, otherwise Enter will not work at the end.
-    if (after.length === 0) text += '\n'
-    document.execCommand('insertHTML', false, text)
-    if (after[0] === '}') {
+    if (after.length === 0) text += "\n"
+    document.execCommand("insertHTML", false, text)
+    if (after[0] === "}") {
       const pos = this.save()
-      document.execCommand('insertHTML', false, '\n' + padding)
+      document.execCommand("insertHTML", false, "\n" + padding)
       this.restore(pos)
     }
   }
@@ -196,7 +196,7 @@ export class CodeJar {
     } else if (open.includes(event.key)) {
       event.preventDefault()
       const text = event.key + close[open.indexOf(event.key)]
-      document.execCommand('insertText', false, text)
+      document.execCommand("insertText", false, text)
       pos.start = ++pos.end
       this.restore(pos)
     }
@@ -211,13 +211,13 @@ export class CodeJar {
         const pos = this.save()
         const len = this.options.tab.length
         this.restore({start, end: start + len})
-        document.execCommand('delete')
+        document.execCommand("delete")
         pos.start -= len
         pos.end -= len
         this.restore(pos)
       }
     } else {
-      document.execCommand('insertText', false, this.options.tab)
+      document.execCommand("insertText", false, this.options.tab)
     }
   }
 
@@ -243,7 +243,7 @@ export class CodeJar {
   }
 
   handleUndoRedo(event: KeyboardEvent) {
-    if (event.metaKey && !event.shiftKey && event.key === 'z') {
+    if (event.metaKey && !event.shiftKey && event.key === "z") {
       event.preventDefault()
       if (this.historyPointer > 0) {
         this.historyPointer--
@@ -255,7 +255,7 @@ export class CodeJar {
       }
     }
 
-    if (event.metaKey && event.shiftKey && event.key === 'z') {
+    if (event.metaKey && event.shiftKey && event.key === "z") {
       event.preventDefault()
       if (this.historyPointer + 1 < this.history.length) {
         this.historyPointer++
@@ -297,14 +297,14 @@ export class CodeJar {
 
   private handlePaste(event: ClipboardEvent) {
     event.preventDefault()
-    const text = ((event as any).originalEvent || event).clipboardData.getData('text/plain')
+    const text = ((event as any).originalEvent || event).clipboardData.getData("text/plain")
     const pos = this.save()
-    document.execCommand('insertText', false, text)
+    document.execCommand("insertText", false, text)
     let html = this.editor.innerHTML
     html = html
-      .replace(/<div>/g, '\n')
-      .replace(/<br>/g, '')
-      .replace(/<\/div>/g, '')
+      .replace(/<div>/g, "\n")
+      .replace(/<br>/g, "")
+      .replace(/<\/div>/g, "")
     this.editor.innerHTML = html
     this.highlight(this.editor)
     this.restore({start: pos.end + text.length, end: pos.end + text.length})
@@ -324,7 +324,7 @@ export class CodeJar {
   }
 
   toString() {
-    return this.editor.textContent || ''
+    return this.editor.textContent || ""
   }
 }
 
@@ -347,12 +347,12 @@ function debounce<T extends Function>(cb: T, wait: number) {
 }
 
 function findPadding(text: string): [string, number, number] {
-// Find beginning of previous line.
+  // Find beginning of previous line.
   let i = text.length - 1
-  while (i >= 0 && text[i] !== '\n') i--
+  while (i >= 0 && text[i] !== "\n") i--
   i++
   // Find padding of the line.
   let j = i
   while (j < text.length && /[ \t]/.test(text[j])) j++
-  return [text.substring(i, j) || '', i, j]
+  return [text.substring(i, j) || "", i, j]
 }
