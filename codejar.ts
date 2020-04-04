@@ -263,7 +263,7 @@ export class CodeJar {
     }
   }
 
-  handleUndoRedo(event: KeyboardEvent) {
+  private handleUndoRedo(event: KeyboardEvent) {
     if (isUndo(event)) {
       event.preventDefault()
       this.at--
@@ -286,7 +286,7 @@ export class CodeJar {
     }
   }
 
-  recordHistory() {
+  private recordHistory() {
     if (!this.focus) return
 
     const html = this.editor.innerHTML
@@ -343,12 +343,16 @@ export class CodeJar {
   }
 }
 
+function isCtrl(event: KeyboardEvent) {
+  return event.metaKey || event.ctrlKey
+}
+
 function isUndo(event: KeyboardEvent) {
-  return event.metaKey && !event.shiftKey && event.code === "KeyZ"
+  return isCtrl(event) && !event.shiftKey && event.code === "KeyZ"
 }
 
 function isRedo(event: KeyboardEvent) {
-  return event.metaKey && event.shiftKey && event.code === "KeyZ"
+  return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
 }
 
 type HistoryRecord = {
