@@ -132,6 +132,9 @@ export class CodeJar {
     const s = window.getSelection()!
     s.removeAllRanges()
 
+    if (pos.start < 0) pos.start = 0
+    if (pos.end < 0) pos.end = 0
+
     const r = document.createRange()
     r.setStart(this.editor, 0)
     r.setEnd(this.editor, 0)
@@ -225,9 +228,10 @@ export class CodeJar {
       if (event.shiftKey) {
         const before = this.beforeCursor()
         let [padding, start,] = findPadding(before)
-        if (padding.startsWith(this.options.tab)) {
+        if (padding.length > 0) {
           const pos = this.save()
-          const len = this.options.tab.length
+          // Remove full length tab or just remaining padding
+          const len = Math.min(this.options.tab.length, padding.length)
           this.restore({start, end: start + len})
           document.execCommand("delete")
           pos.start -= len
