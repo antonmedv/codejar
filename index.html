@@ -43,6 +43,7 @@
 </main>
 <script type="module">
   import {CodeJar} from "./codejar.js"
+  import {withLineNumbers} from "./linenumbers.js"
 
   const editor = document.querySelector(".editor")
 
@@ -53,7 +54,7 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = new CodeJar(editor, highlight, {tab: "  "})
+  const jar = new CodeJar(editor, withLineNumbers(highlight), {tab: "  "})
 
   jar.updateCode(localStorage.getItem("code"))
   jar.onUpdate(code => {
