@@ -1,6 +1,6 @@
 {
   "name": "@medv/codejar",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Micro code editor",
   "license": "MIT",
   "repository": "antonmedv/codejar",
