@@ -1,7 +1,7 @@
 {
   "name": "@medv/codejar",
   "version": "1.0.2",
-  "description": "Micro code editor",
+  "description": "An embeddable code editor for the browser",
   "license": "MIT",
   "repository": "antonmedv/codejar",
   "author": "Anton Medvedev <anton@medv.io>",
