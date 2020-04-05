@@ -4,7 +4,7 @@ type Options = {
 
 export class CodeJar {
   private readonly editor: HTMLElement
-  private readonly highlight: (e: HTMLElement) => {}
+  private readonly highlight: (e: HTMLElement) => void
   private readonly listeners: [string, any][] = []
   private options: Options
   private history: HistoryRecord[] = []
@@ -12,7 +12,7 @@ export class CodeJar {
   private focus = false
   private callback?: (code: string) => void
 
-  constructor(editor: HTMLElement, highlight: (e: HTMLElement) => {}, options: Partial<Options> = {}) {
+  constructor(editor: HTMLElement, highlight: (e: HTMLElement) => void, options: Partial<Options> = {}) {
     this.editor = editor
     this.highlight = highlight
     this.options = {

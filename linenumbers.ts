@@ -3,7 +3,7 @@ type Options = {
 }
 
 export function withLineNumbers(
-  highlight: (e: HTMLElement) => {},
+  highlight: (e: HTMLElement) => void,
   options: Partial<Options> = {}
 ) {
   const opts: Options = {
