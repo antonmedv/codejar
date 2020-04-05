@@ -2,6 +2,14 @@
 <h3 align="center">CodeJar – a micro code editor</h3>
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar/screenshot.png" width="709"></a></p>
 
+## Features
+
+* Lightweight (**2 kB** only)
+* Preserves indentation on a new line
+* Adds closing brackets, quotes
+* Indents line with the **Tab** key
+* Supports **undo**/**redo** 
+
 ## Getting Started
 
 Install CodeJar 🍯via npm:
@@ -107,7 +115,10 @@ let code = jar.toString()
 
 Removes event listeners from editor.
 
+## Related
 
-# License
+* [react-codejar](https://github.com/guilhermelimak/react-codejar)
+
+## License
 
 [MIT](LICENSE)
