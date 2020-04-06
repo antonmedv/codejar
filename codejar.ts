@@ -95,75 +95,112 @@ export class CodeJar {
     }
   }
 
-  private save(): Position {
-    const s = window.getSelection()!
-    const r = s.getRangeAt(0)
+  /**
+   * Visits all elements inside this.editor
+   * @param visitor visitor function
+   */
+  private visit(visitor: (el: Node) => 'stop' | undefined) {
+    const queue: Node[] = []
 
-    const queue: ChildNode[] = []
     if (this.editor.firstChild) queue.push(this.editor.firstChild)
 
-    const pos: Position = {start: 0, end: 0}
+    let el = queue.pop()
 
-    let startFound = false
-    let el = queue.shift()
     while (el) {
-      if (el === r.startContainer) {
-        pos.start += r.startOffset
-        startFound = true
-      }
-      if (el === r.endContainer) {
-        pos.end += r.endOffset
+      if (visitor(el) === 'stop')
         break
-      }
-      if (el.nodeType === Node.TEXT_NODE) {
-        let len = el.nodeValue!.length
-        if (!startFound) pos.start += len
-        pos.end += len
-      }
+
       if (el.nextSibling) queue.push(el.nextSibling)
       if (el.firstChild) queue.push(el.firstChild)
+
       el = queue.pop()
     }
+  }
+
+  private save(): Position {
+    const s = window.getSelection()!
+    const pos: Position = { start: 0, end: 0, direction: undefined }
+
+    this.visit(el => {
+      if (el === s.anchorNode && el === s.focusNode) {
+        pos.start += s.anchorOffset
+        pos.end += s.focusOffset
+        pos.direction = s.anchorOffset < s.focusOffset ? '->' : '<-'
+        return 'stop'
+      }
+      if (el === s.anchorNode) {
+        pos.start += s.anchorOffset
+        if (!pos.direction) {
+          pos.direction = '->'
+        }
+        else {
+          return 'stop'
+        }
+      }
+      else if (el === s.focusNode) {
+        pos.end += s.focusOffset
+        if (!pos.direction) {
+          pos.direction = '<-'
+        }
+        else {
+          return 'stop'
+        }
+      }
+
+      if (el.nodeType === Node.TEXT_NODE) {
+        if (pos.direction != '->') pos.start += el.nodeValue!.length
+        if (pos.direction != '<-') pos.end += el.nodeValue!.length
+      }
+    })
 
     return pos
   }
 
   private restore(pos: Position) {
-    const s = window.getSelection()!
-    s.removeAllRanges()
 
+    let current = 0
+    let startNode: Node, endNode: Node
+    let startOffset = 0, endOffset = 0
+
+    if (!pos.direction) pos.direction = '->'
     if (pos.start < 0) pos.start = 0
     if (pos.end < 0) pos.end = 0
 
-    const r = document.createRange()
-    r.setStart(this.editor, 0)
-    r.setEnd(this.editor, 0)
+    // Flip start and end if direction is reversed.
+    if (pos.direction == '<-') {
+      const { start, end } = pos
+      pos.start = end
+      pos.end = start
+    }
 
-    const queue: ChildNode[] = []
-    if (this.editor.firstChild) queue.push(this.editor.firstChild)
+    this.visit(el => {
 
-    let n = 0, startFound = false
-    let el = queue.shift()
-    while (el) {
-      if (el.nodeType === Node.TEXT_NODE) {
-        let len = (el.nodeValue || "").length
-        n += len
-        if (!startFound && n >= pos.start) {
-          const offset = len - (n - pos.start)
-          r.setStart(el, offset)
-          startFound = true
+      if (el.nodeType !== Node.TEXT_NODE) return
+
+      const len = (el.nodeValue || "").length
+
+      if (current + len >= pos.start) {
+        if (!startNode) {
+          startNode = el
+          startOffset = pos.start - current
         }
-        if (n >= pos.end) {
-          const offset = len - (n - pos.end)
-          r.setEnd(el, offset)
-          break
+        if (current + len >= pos.end) {
+          endNode = el
+          endOffset = pos.end - current
+
+          return 'stop'
         }
       }
-      if (el.nextSibling) queue.push(el.nextSibling)
-      if (el.firstChild) queue.push(el.firstChild)
-      el = queue.pop()
+
+      current += len
+    })
+
+    // Flip back the selection
+    if (pos.direction == '<-') {
+      [startNode, startOffset, endNode, endOffset] = [endNode!, endOffset, startNode!, startOffset]
     }
-    s.addRange(r)
+
+    getSelection()!.setBaseAndExtent(startNode!, startOffset, endNode!, endOffset)
   }
 
   private beforeCursor() {
@@ -367,6 +404,7 @@ type HistoryRecord = {
 type Position = {
   start: number
   end: number
+  direction?: '->' | '<-' | undefined
 }
 
 function debounce(cb: any, wait: number) {
