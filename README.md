@@ -1,5 +1,5 @@
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar.svg" width="72"></a></p>
-<h3 align="center">CodeJar – a micro code editor</h3>
+<h3 align="center">CodeJar – an embeddable code editor for the browser</h3>
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar/screenshot.png" width="709"></a></p>
 
 ## Features
