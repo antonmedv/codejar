@@ -103,7 +103,7 @@ export class CodeJar {
       if (el === s.anchorNode && el === s.focusNode) {
         pos.start += s.anchorOffset
         pos.end += s.focusOffset
-        pos.dir = s.anchorOffset < s.focusOffset ? "->" : "<-"
+        pos.dir = s.anchorOffset <= s.focusOffset ? "->" : "<-"
         return "stop"
       }
 
@@ -133,9 +133,9 @@ export class CodeJar {
   }
 
   private restore(pos: Position) {
-    let current = 0
-    let startNode: Node, endNode: Node
-    let startOffset = 0, endOffset = 0
+    const s = window.getSelection()!
+    let startNode: Node | undefined, startOffset = 0
+    let endNode: Node | undefined, endOffset = 0
 
     if (!pos.dir) pos.dir = "->"
     if (pos.start < 0) pos.start = 0
@@ -148,11 +148,12 @@ export class CodeJar {
       pos.end = start
     }
 
+    let current = 0
+
     visit(this.editor, el => {
       if (el.nodeType !== Node.TEXT_NODE) return
 
       const len = (el.nodeValue || "").length
-
       if (current + len >= pos.start) {
         if (!startNode) {
           startNode = el
@@ -164,16 +165,19 @@ export class CodeJar {
           return "stop"
         }
       }
-
       current += len
     })
 
+    // If everything deleted place cursor at editor
+    if (!startNode) startNode = this.editor
+    if (!endNode) endNode = this.editor
+
     // Flip back the selection
     if (pos.dir == "<-") {
-      [startNode, startOffset, endNode, endOffset] = [endNode!, endOffset, startNode!, startOffset]
+      [startNode, startOffset, endNode, endOffset] = [endNode, endOffset, startNode, startOffset]
     }
 
-    getSelection()!.setBaseAndExtent(startNode!, startOffset, endNode!, endOffset)
+    s.setBaseAndExtent(startNode, startOffset, endNode, endOffset)
   }
 
   private beforeCursor() {
@@ -199,14 +203,26 @@ export class CodeJar {
       event.preventDefault()
       const before = this.beforeCursor()
       const after = this.afterCursor()
+
       let [padding] = findPadding(before)
-      let doublePadding = padding
-      if (before[before.length - 1] === "{") doublePadding += this.options.tab
-      let text = "\n" + doublePadding
-      // Add an extra newline, otherwise Enter will not work at the end.
-      if (after.length === 0) text += "\n"
+      let newLinePadding = padding
+
+      // If last symbol is "{" ident new line
+      if (before[before.length - 1] === "{") {
+        newLinePadding += this.options.tab
+      }
+
+      let text = "\n" + newLinePadding
+
+      // If cursor at the end of editor, add an extra newline, otherwise Enter will not work
+      if (after.length === 0) {
+        text += "\n"
+      }
+
       document.execCommand("insertHTML", false, text)
-      if (after[0] === "}") {
+
+      // Place adjacent "}" on next line
+      if (newLinePadding !== padding && after[0] === "}") {
         const pos = this.save()
         document.execCommand("insertHTML", false, "\n" + padding)
         this.restore(pos)
@@ -218,12 +234,13 @@ export class CodeJar {
     const open = `([{'"`
     const close = `)]}'"`
     const codeAfter = this.afterCursor()
-    const pos = this.save()
     if (close.includes(event.key) && codeAfter.substr(0, 1) === event.key) {
+      const pos = this.save()
       event.preventDefault()
       pos.start = ++pos.end
       this.restore(pos)
     } else if (open.includes(event.key)) {
+      const pos = this.save()
       event.preventDefault()
       const text = event.key + close[open.indexOf(event.key)]
       document.execCommand("insertText", false, text)

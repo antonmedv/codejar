@@ -11,7 +11,7 @@ export function withLineNumbers(
     ...options
   }
 
-  let lineNumbers: HTMLElement | null = null
+  let lineNumbers: HTMLElement
   return function (editor: HTMLElement) {
     highlight(editor)
 
