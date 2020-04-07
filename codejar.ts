@@ -95,61 +95,37 @@ export class CodeJar {
     }
   }
 
-  /**
-   * Visits all elements inside this.editor
-   * @param visitor visitor function
-   */
-  private visit(visitor: (el: Node) => 'stop' | undefined) {
-    const queue: Node[] = []
-
-    if (this.editor.firstChild) queue.push(this.editor.firstChild)
-
-    let el = queue.pop()
-
-    while (el) {
-      if (visitor(el) === 'stop')
-        break
-
-      if (el.nextSibling) queue.push(el.nextSibling)
-      if (el.firstChild) queue.push(el.firstChild)
-
-      el = queue.pop()
-    }
-  }
-
   private save(): Position {
     const s = window.getSelection()!
-    const pos: Position = { start: 0, end: 0, direction: undefined }
+    const pos: Position = {start: 0, end: 0, dir: undefined}
 
-    this.visit(el => {
+    visit(this.editor, el => {
       if (el === s.anchorNode && el === s.focusNode) {
         pos.start += s.anchorOffset
         pos.end += s.focusOffset
-        pos.direction = s.anchorOffset < s.focusOffset ? '->' : '<-'
-        return 'stop'
+        pos.dir = s.anchorOffset < s.focusOffset ? "->" : "<-"
+        return "stop"
       }
+
       if (el === s.anchorNode) {
         pos.start += s.anchorOffset
-        if (!pos.direction) {
-          pos.direction = '->'
+        if (!pos.dir) {
+          pos.dir = "->"
+        } else {
+          return "stop"
         }
-        else {
-          return 'stop'
-        }
-      }
-      else if (el === s.focusNode) {
+      } else if (el === s.focusNode) {
         pos.end += s.focusOffset
-        if (!pos.direction) {
-          pos.direction = '<-'
-        }
-        else {
-          return 'stop'
+        if (!pos.dir) {
+          pos.dir = "<-"
+        } else {
+          return "stop"
         }
       }
 
       if (el.nodeType === Node.TEXT_NODE) {
-        if (pos.direction != '->') pos.start += el.nodeValue!.length
-        if (pos.direction != '<-') pos.end += el.nodeValue!.length
+        if (pos.dir != "->") pos.start += el.nodeValue!.length
+        if (pos.dir != "<-") pos.end += el.nodeValue!.length
       }
     })
 
@@ -157,24 +133,22 @@ export class CodeJar {
   }
 
   private restore(pos: Position) {
-
     let current = 0
     let startNode: Node, endNode: Node
     let startOffset = 0, endOffset = 0
 
-    if (!pos.direction) pos.direction = '->'
+    if (!pos.dir) pos.dir = "->"
     if (pos.start < 0) pos.start = 0
     if (pos.end < 0) pos.end = 0
 
-    // Flip start and end if direction is reversed.
-    if (pos.direction == '<-') {
-      const { start, end } = pos
+    // Flip start and end if the direction reversed
+    if (pos.dir == "<-") {
+      const {start, end} = pos
       pos.start = end
       pos.end = start
     }
 
-    this.visit(el => {
-
+    visit(this.editor, el => {
       if (el.nodeType !== Node.TEXT_NODE) return
 
       const len = (el.nodeValue || "").length
@@ -187,8 +161,7 @@ export class CodeJar {
         if (current + len >= pos.end) {
           endNode = el
           endOffset = pos.end - current
-
-          return 'stop'
+          return "stop"
         }
       }
 
@@ -196,7 +169,7 @@ export class CodeJar {
     })
 
     // Flip back the selection
-    if (pos.direction == '<-') {
+    if (pos.dir == "<-") {
       [startNode, startOffset, endNode, endOffset] = [endNode!, endOffset, startNode!, startOffset]
     }
 
@@ -384,6 +357,24 @@ export class CodeJar {
   }
 }
 
+function visit(editor: HTMLElement, visitor: (el: Node) => "stop" | undefined) {
+  const queue: Node[] = []
+
+  if (editor.firstChild) queue.push(editor.firstChild)
+
+  let el = queue.pop()
+
+  while (el) {
+    if (visitor(el) === "stop")
+      break
+
+    if (el.nextSibling) queue.push(el.nextSibling)
+    if (el.firstChild) queue.push(el.firstChild)
+
+    el = queue.pop()
+  }
+}
+
 function isCtrl(event: KeyboardEvent) {
   return event.metaKey || event.ctrlKey
 }
@@ -404,7 +395,7 @@ type HistoryRecord = {
 type Position = {
   start: number
   end: number
-  direction?: '->' | '<-' | undefined
+  dir?: "->" | "<-"
 }
 
 function debounce(cb: any, wait: number) {
