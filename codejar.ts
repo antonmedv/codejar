@@ -2,104 +2,102 @@ type Options = {
   tab: string
 }
 
-export class CodeJar {
-  private readonly editor: HTMLElement
-  private readonly highlight: (e: HTMLElement) => void
-  private readonly listeners: [string, any][] = []
-  private options: Options
-  private history: HistoryRecord[] = []
-  private at = -1
-  private focus = false
-  private callback?: (code: string) => void
+type HistoryRecord = {
+  html: string
+  pos: Position
+}
 
-  constructor(editor: HTMLElement, highlight: (e: HTMLElement) => void, options: Partial<Options> = {}) {
-    this.editor = editor
-    this.highlight = highlight
-    this.options = {
-      tab: "\t",
-      ...options
+type Position = {
+  start: number
+  end: number
+  dir?: "->" | "<-"
+}
+
+export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
+  const options = {
+    tab: "\t",
+    ...opt
+  }
+  let listeners: [string, any][] = []
+  let history: HistoryRecord[] = []
+  let at = -1
+  let focus = false
+  let callback: (code: string) => void | undefined
+
+  editor.setAttribute("contentEditable", "true")
+  editor.setAttribute("spellcheck", "false")
+  editor.style.outline = "none"
+  editor.style.overflowWrap = "break-word"
+  editor.style.overflowY = "auto"
+  editor.style.resize = "vertical"
+  editor.style.whiteSpace = "pre-wrap"
+
+  highlight(editor)
+
+  const debounceHighlight = debounce(() => {
+    const pos = save()
+    highlight(editor)
+    restore(pos)
+  }, 30)
+
+  let recording = false
+  const shouldRecord = (event: KeyboardEvent): boolean => {
+    return !isUndo(event) && !isRedo(event)
+      && event.key !== "Meta"
+      && event.key !== "Control"
+      && event.key !== "Alt"
+      && !event.key.startsWith("Arrow")
+  }
+  const debounceRecordHistory = debounce((event: KeyboardEvent) => {
+    if (shouldRecord(event)) {
+      recordHistory()
+      recording = false
     }
+  }, 300)
 
-    this.editor.setAttribute("contentEditable", "true")
-    this.editor.setAttribute("spellcheck", "false")
-    this.editor.style.outline = "none"
-    this.editor.style.overflowWrap = "break-word"
-    this.editor.style.overflowY = "auto"
-    this.editor.style.resize = "vertical"
-    this.editor.style.whiteSpace = "pre-wrap"
-
-    this.highlight(this.editor)
-    const debounceHighlight = debounce(() => {
-      const pos = this.save()
-      this.highlight(this.editor)
-      this.restore(pos)
-    }, 30)
-
-    let recording = false
-    const shouldRecord = (event: KeyboardEvent): boolean => {
-      return !isUndo(event) && !isRedo(event)
-        && event.key !== "Meta"
-        && event.key !== "Control"
-        && event.key !== "Alt"
-        && !event.key.startsWith("Arrow")
-    }
-    const debounceRecordHistory = debounce((event: KeyboardEvent) => {
-      if (shouldRecord(event)) {
-        this.recordHistory()
-        recording = false
-      }
-    }, 300)
-
-    const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
-      this.listeners.push([type, fn])
-      this.editor.addEventListener(type, fn)
-    }
-
-    on("keydown", event => {
-      this.handleNewLine(event)
-      this.handleTabCharacters(event)
-      this.handleJumpToBeginningOfLine(event)
-      this.handleSelfClosingCharacters(event)
-      this.handleUndoRedo(event)
-      if (shouldRecord(event) && !recording) {
-        this.recordHistory()
-        recording = true
-      }
-    })
-
-    on("keyup", event => {
-      debounceHighlight()
-      debounceRecordHistory(event)
-      if (this.callback) this.callback(this.toString())
-    })
-
-    on("focus", _event => {
-      this.focus = true
-    })
-
-    on("blur", _event => {
-      this.focus = false
-    })
-
-    on("paste", event => {
-      this.recordHistory()
-      this.handlePaste(event)
-      this.recordHistory()
-      if (this.callback) this.callback(this.toString())
-    })
+  const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
+    listeners.push([type, fn])
+    editor.addEventListener(type, fn)
   }
 
-  destroy() {
-    for (let [type, fn] of this.listeners) {
-      this.editor.removeEventListener(type, fn)
+  on("keydown", event => {
+    handleNewLine(event)
+    handleTabCharacters(event)
+    handleJumpToBeginningOfLine(event)
+    handleSelfClosingCharacters(event)
+    handleUndoRedo(event)
+    if (shouldRecord(event) && !recording) {
+      recordHistory()
+      recording = true
     }
-  }
+  })
 
-  private save(): Position {
+  on("keyup", event => {
+    debounceHighlight()
+    debounceRecordHistory(event)
+    if (callback) callback(toString())
+  })
+
+  on("focus", _event => {
+    focus = true
+  })
+
+  on("blur", _event => {
+    focus = false
+  })
+
+  on("paste", event => {
+    recordHistory()
+    handlePaste(event)
+    recordHistory()
+    if (callback) callback(toString())
+  })
+
+  function save(): Position {
     const s = window.getSelection()!
     const pos: Position = {start: 0, end: 0, dir: undefined}
 
-    visit(this.editor, el => {
+    visit(editor, el => {
       if (el === s.anchorNode && el === s.focusNode) {
         pos.start += s.anchorOffset
         pos.end += s.focusOffset
@@ -132,7 +130,7 @@ export class CodeJar {
     return pos
   }
 
-  private restore(pos: Position) {
+  function restore(pos: Position) {
     const s = window.getSelection()!
     let startNode: Node | undefined, startOffset = 0
     let endNode: Node | undefined, endOffset = 0
@@ -150,7 +148,7 @@ export class CodeJar {
 
     let current = 0
 
-    visit(this.editor, el => {
+    visit(editor, el => {
       if (el.nodeType !== Node.TEXT_NODE) return
 
       const len = (el.nodeValue || "").length
@@ -169,8 +167,8 @@ export class CodeJar {
     })
 
     // If everything deleted place cursor at editor
-    if (!startNode) startNode = this.editor
-    if (!endNode) endNode = this.editor
+    if (!startNode) startNode = editor
+    if (!endNode) endNode = editor
 
     // Flip back the selection
     if (pos.dir == "<-") {
@@ -180,36 +178,36 @@ export class CodeJar {
     s.setBaseAndExtent(startNode, startOffset, endNode, endOffset)
   }
 
-  private beforeCursor() {
+  function beforeCursor() {
     const s = window.getSelection()!
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
-    r.selectNodeContents(this.editor)
+    r.selectNodeContents(editor)
     r.setEnd(r0.startContainer, r0.startOffset)
     return r.toString()
   }
 
-  private afterCursor() {
+  function afterCursor() {
     const s = window.getSelection()!
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
-    r.selectNodeContents(this.editor)
+    r.selectNodeContents(editor)
     r.setStart(r0.endContainer, r0.endOffset)
     return r.toString()
   }
 
-  private handleNewLine(event: KeyboardEvent) {
+  function handleNewLine(event: KeyboardEvent) {
     if (event.key === "Enter") {
       event.preventDefault()
-      const before = this.beforeCursor()
-      const after = this.afterCursor()
+      const before = beforeCursor()
+      const after = afterCursor()
 
       let [padding] = findPadding(before)
       let newLinePadding = padding
 
       // If last symbol is "{" ident new line
       if (before[before.length - 1] === "{") {
-        newLinePadding += this.options.tab
+        newLinePadding += options.tab
       }
 
       let text = "\n" + newLinePadding
@@ -223,213 +221,207 @@ export class CodeJar {
 
       // Place adjacent "}" on next line
       if (newLinePadding !== padding && after[0] === "}") {
-        const pos = this.save()
+        const pos = save()
         document.execCommand("insertHTML", false, "\n" + padding)
-        this.restore(pos)
+        restore(pos)
       }
     }
   }
 
-  private handleSelfClosingCharacters(event: KeyboardEvent) {
+  function handleSelfClosingCharacters(event: KeyboardEvent) {
     const open = `([{'"`
     const close = `)]}'"`
-    const codeAfter = this.afterCursor()
+    const codeAfter = afterCursor()
     if (close.includes(event.key) && codeAfter.substr(0, 1) === event.key) {
-      const pos = this.save()
+      const pos = save()
       event.preventDefault()
       pos.start = ++pos.end
-      this.restore(pos)
+      restore(pos)
     } else if (open.includes(event.key)) {
-      const pos = this.save()
+      const pos = save()
       event.preventDefault()
       const text = event.key + close[open.indexOf(event.key)]
       document.execCommand("insertText", false, text)
       pos.start = ++pos.end
-      this.restore(pos)
+      restore(pos)
     }
   }
 
-  private handleTabCharacters(event: KeyboardEvent) {
+  function handleTabCharacters(event: KeyboardEvent) {
     if (event.key === "Tab") {
       event.preventDefault()
       if (event.shiftKey) {
-        const before = this.beforeCursor()
+        const before = beforeCursor()
         let [padding, start,] = findPadding(before)
         if (padding.length > 0) {
-          const pos = this.save()
+          const pos = save()
           // Remove full length tab or just remaining padding
-          const len = Math.min(this.options.tab.length, padding.length)
-          this.restore({start, end: start + len})
+          const len = Math.min(options.tab.length, padding.length)
+          restore({start, end: start + len})
           document.execCommand("delete")
           pos.start -= len
           pos.end -= len
-          this.restore(pos)
+          restore(pos)
         }
       } else {
-        document.execCommand("insertText", false, this.options.tab)
+        document.execCommand("insertText", false, options.tab)
       }
     }
   }
 
-  private handleJumpToBeginningOfLine(event: KeyboardEvent) {
+  function handleJumpToBeginningOfLine(event: KeyboardEvent) {
     if (event.key === "ArrowLeft" && event.metaKey) {
       event.preventDefault()
-      const before = this.beforeCursor()
+      const before = beforeCursor()
       let [padding, start, end] = findPadding(before)
       if (before.endsWith(padding)) {
         if (event.shiftKey) {
-          const pos = this.save()
-          this.restore({start, end: pos.end}) // Select from line start.
+          const pos = save()
+          restore({start, end: pos.end}) // Select from line start.
         } else {
-          this.restore({start, end: start}) // Jump to line start.
+          restore({start, end: start}) // Jump to line start.
         }
       } else {
         if (event.shiftKey) {
-          const pos = this.save()
-          this.restore({start: end, end: pos.end}) // Select from beginning of text.
+          const pos = save()
+          restore({start: end, end: pos.end}) // Select from beginning of text.
         } else {
-          this.restore({start: end, end}) // Jump to beginning of text.
+          restore({start: end, end}) // Jump to beginning of text.
         }
       }
     }
   }
 
-  private handleUndoRedo(event: KeyboardEvent) {
+  function handleUndoRedo(event: KeyboardEvent) {
     if (isUndo(event)) {
       event.preventDefault()
-      this.at--
-      const record = this.history[this.at]
+      at--
+      const record = history[at]
       if (record) {
-        this.editor.innerHTML = record.html
-        this.restore(record.pos)
+        editor.innerHTML = record.html
+        restore(record.pos)
       }
-      if (this.at < 0) this.at = 0
+      if (at < 0) at = 0
     }
     if (isRedo(event)) {
       event.preventDefault()
-      this.at++
-      const record = this.history[this.at]
+      at++
+      const record = history[at]
       if (record) {
-        this.editor.innerHTML = record.html
-        this.restore(record.pos)
+        editor.innerHTML = record.html
+        restore(record.pos)
       }
-      if (this.at >= this.history.length) this.at--
+      if (at >= history.length) at--
     }
   }
 
-  private recordHistory() {
-    if (!this.focus) return
+  function recordHistory() {
+    if (!focus) return
 
-    const html = this.editor.innerHTML
-    const pos = this.save()
+    const html = editor.innerHTML
+    const pos = save()
 
-    const lastRecord = this.history[this.at]
+    const lastRecord = history[at]
     if (lastRecord) {
       if (lastRecord.html === html
         && lastRecord.pos.start === pos.start
         && lastRecord.pos.end === pos.end) return
     }
 
-    this.at++
-    this.history[this.at] = {html, pos}
-    this.history.splice(this.at + 1)
+    at++
+    history[at] = {html, pos}
+    history.splice(at + 1)
 
     const maxHistory = 300
-    if (this.at > maxHistory) {
-      this.at = maxHistory
-      this.history.splice(0, 1)
+    if (at > maxHistory) {
+      at = maxHistory
+      history.splice(0, 1)
     }
   }
 
-  private handlePaste(event: ClipboardEvent) {
+  function handlePaste(event: ClipboardEvent) {
     event.preventDefault()
     const text = ((event as any).originalEvent || event).clipboardData.getData("text/plain")
-    const pos = this.save()
+    const pos = save()
     document.execCommand("insertText", false, text)
-    let html = this.editor.innerHTML
+    let html = editor.innerHTML
     html = html
       .replace(/<div>/g, "\n")
       .replace(/<br>/g, "")
       .replace(/<\/div>/g, "")
-    this.editor.innerHTML = html
-    this.highlight(this.editor)
-    this.restore({start: pos.end + text.length, end: pos.end + text.length})
+    editor.innerHTML = html
+    highlight(editor)
+    restore({start: pos.end + text.length, end: pos.end + text.length})
   }
 
-  updateOptions(options: Partial<Options>) {
-    this.options = {...this.options, ...options}
+
+  function visit(editor: HTMLElement, visitor: (el: Node) => "stop" | undefined) {
+    const queue: Node[] = []
+
+    if (editor.firstChild) queue.push(editor.firstChild)
+
+    let el = queue.pop()
+
+    while (el) {
+      if (visitor(el) === "stop")
+        break
+
+      if (el.nextSibling) queue.push(el.nextSibling)
+      if (el.firstChild) queue.push(el.firstChild)
+
+      el = queue.pop()
+    }
   }
 
-  updateCode(code: string) {
-    this.editor.textContent = code
-    this.highlight(this.editor)
+  function isCtrl(event: KeyboardEvent) {
+    return event.metaKey || event.ctrlKey
   }
 
-  onUpdate(callback: (code: string) => void) {
-    this.callback = callback
+  function isUndo(event: KeyboardEvent) {
+    return isCtrl(event) && !event.shiftKey && event.code === "KeyZ"
   }
 
-  toString() {
-    return this.editor.textContent || ""
+  function isRedo(event: KeyboardEvent) {
+    return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
   }
-}
 
-function visit(editor: HTMLElement, visitor: (el: Node) => "stop" | undefined) {
-  const queue: Node[] = []
-
-  if (editor.firstChild) queue.push(editor.firstChild)
-
-  let el = queue.pop()
-
-  while (el) {
-    if (visitor(el) === "stop")
-      break
-
-    if (el.nextSibling) queue.push(el.nextSibling)
-    if (el.firstChild) queue.push(el.firstChild)
-
-    el = queue.pop()
+  function debounce(cb: any, wait: number) {
+    let timeout = 0
+    return (...args: any) => {
+      clearTimeout(timeout)
+      timeout = window.setTimeout(() => cb(...args), wait)
+    }
   }
-}
 
-function isCtrl(event: KeyboardEvent) {
-  return event.metaKey || event.ctrlKey
-}
-
-function isUndo(event: KeyboardEvent) {
-  return isCtrl(event) && !event.shiftKey && event.code === "KeyZ"
-}
-
-function isRedo(event: KeyboardEvent) {
-  return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
-}
-
-type HistoryRecord = {
-  html: string
-  pos: Position
-}
-
-type Position = {
-  start: number
-  end: number
-  dir?: "->" | "<-"
-}
-
-function debounce(cb: any, wait: number) {
-  let timeout = 0
-  return (...args: any) => {
-    clearTimeout(timeout)
-    timeout = window.setTimeout(() => cb(...args), wait)
+  function findPadding(text: string): [string, number, number] {
+    // Find beginning of previous line.
+    let i = text.length - 1
+    while (i >= 0 && text[i] !== "\n") i--
+    i++
+    // Find padding of the line.
+    let j = i
+    while (j < text.length && /[ \t]/.test(text[j])) j++
+    return [text.substring(i, j) || "", i, j]
   }
-}
 
-function findPadding(text: string): [string, number, number] {
-  // Find beginning of previous line.
-  let i = text.length - 1
-  while (i >= 0 && text[i] !== "\n") i--
-  i++
-  // Find padding of the line.
-  let j = i
-  while (j < text.length && /[ \t]/.test(text[j])) j++
-  return [text.substring(i, j) || "", i, j]
+  return {
+    updateOptions(options: Partial<Options>) {
+      options = {...options, ...options}
+    },
+    updateCode(code: string) {
+      editor.textContent = code
+      highlight(editor)
+    },
+    onUpdate(callback: (code: string) => void) {
+      callback = callback
+    },
+    toString() {
+      return editor.textContent || ""
+    },
+    destroy() {
+      for (let [type, fn] of listeners) {
+        editor.removeEventListener(type, fn)
+      }
+    },
+  }
 }
