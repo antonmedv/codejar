@@ -1,12 +1,16 @@
 {
   "name": "@medv/codejar",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "An embeddable code editor for the browser",
   "license": "MIT",
   "repository": "antonmedv/codejar",
   "author": "Anton Medvedev <anton@medv.io>",
   "homepage": "https://medv.io/codejar/",
   "main": "codejar.js",
+  "files": [
+    "*.ts",
+    "*.js"
+  ],
   "scripts": {
     "start": "tsc -w",
     "size": "minify codejar.js --sourceType module | gzip-size"
