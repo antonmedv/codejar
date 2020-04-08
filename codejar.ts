@@ -404,6 +404,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     return [text.substring(i, j) || "", i, j]
   }
 
+  function toString() {
+    return editor.textContent || ""
+  }
+
   return {
     updateOptions(options: Partial<Options>) {
       options = {...options, ...options}
@@ -412,12 +416,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
       editor.textContent = code
       highlight(editor)
     },
-    onUpdate(callback: (code: string) => void) {
-      callback = callback
+    onUpdate(cb: (code: string) => void) {
+      callback = cb
     },
-    toString() {
-      return editor.textContent || ""
-    },
+    toString,
     destroy() {
       for (let [type, fn] of listeners) {
         editor.removeEventListener(type, fn)
