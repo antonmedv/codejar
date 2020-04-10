@@ -73,6 +73,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   })
 
   on("keyup", event => {
+    if(event.isComposing) {
+      return
+    }
+
     debounceHighlight()
     debounceRecordHistory(event)
     if (callback) callback(toString())
