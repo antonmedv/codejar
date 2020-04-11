@@ -36,17 +36,57 @@
             padding: 10px;
             tab-size: 4;
         }
+
+        .popup {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+            display: none;
+            font-family: "Source Code Pro", monospace;
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: normal;
+            line-height: 20px;
+            max-width: 500px;
+            overflow: hidden;
+            padding: 5px;
+            pointer-events: none;
+            position: absolute;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
 <main>
     <div class="editor language-js"></div>
+    <div class="popup"></div>
 </main>
 <script type="module">
-  import {CodeJar} from "./codejar.js"
-  import {withLineNumbers} from "./linenumbers.js"
+  import {CodeJar} from './codejar.js'
+  import {withLineNumbers} from './linenumbers.js'
+  import {cursorPosition, selectedText, textBeforeCursor, textAfterCursor} from './cursor.js'
 
-  const editor = document.querySelector(".editor")
+  const editor = document.querySelector('.editor')
+  const popup = document.querySelector('.popup')
+
+  const updatePopup = () => {
+    const pos = cursorPosition()
+    popup.style.top = pos.top
+    popup.style.left = pos.left
+
+    const before = textBeforeCursor(editor).match(/\b\w+$/)
+    const after = textAfterCursor(editor).match(/^\w+\b/)
+    let word = (before && before[0]) || ''
+    word += selectedText()
+    word += (after && after[0]) || ''
+    if (word) {
+      popup.style.display = 'block'
+      popup.textContent = word
+    } else popup.style.display = 'none'
+  }
+
+  editor.addEventListener('click', updatePopup)
+  editor.addEventListener('keyup', updatePopup)
 
   const highlight = editor => {
     // highlight.js does not trim old tags,
@@ -55,11 +95,11 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = new CodeJar(editor, withLineNumbers(highlight), {tab: "  "})
+  const jar = new CodeJar(editor, withLineNumbers(highlight), {tab: '  '})
 
-  jar.updateCode(localStorage.getItem("code"))
+  jar.updateCode(localStorage.getItem('code'))
   jar.onUpdate(code => {
-    localStorage.setItem("code", code)
+    localStorage.setItem('code', code)
   })
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
