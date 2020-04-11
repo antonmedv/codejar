@@ -1,4 +1,6 @@
 type Options = {
+  class: string
+  wrapClass: string
   width: string
 }
 
@@ -7,6 +9,8 @@ export function withLineNumbers(
   options: Partial<Options> = {}
 ) {
   const opts: Options = {
+    class: "codejar-linenumbers",
+    wrapClass: "codejar-wrap",
     width: "35px",
     ...options
   }
@@ -35,9 +39,11 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   const css = getComputedStyle(editor)
 
   const wrap = document.createElement("div")
+  wrap.className = opts.wrapClass
   wrap.style.position = "relative"
 
   const lineNumbers = document.createElement("div")
+  lineNumbers.className = opts.class
   wrap.appendChild(lineNumbers)
 
   // Add own styles
