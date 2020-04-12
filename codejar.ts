@@ -61,6 +61,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
   on("keydown", event => {
+    if (event.defaultPrevented) return
+
     handleNewLine(event)
     handleTabCharacters(event)
     handleJumpToBeginningOfLine(event)
@@ -73,7 +75,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   })
 
   on("keyup", event => {
-    if(event.isComposing) return
+    if (event.defaultPrevented) return
+    if (event.isComposing) return
 
     debounceHighlight()
     debounceRecordHistory(event)
