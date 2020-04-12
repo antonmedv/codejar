@@ -1,23 +1,61 @@
 {
   "name": "@medv/codejar",
-  "version": "1.0.7",
+  "version": "1.1.7",
   "description": "An embeddable code editor for the browser",
   "license": "MIT",
   "repository": "antonmedv/codejar",
   "author": "Anton Medvedev <anton@medv.io>",
   "homepage": "https://medv.io/codejar/",
-  "main": "codejar.js",
+  "main": "dist/codejar.js",
+  "module": "dist/codejar.module.js",
+  "unpkg": "dist/codejar.umd.js",
+  "source": "src/codejar.ts",
+  "types": "dist/src/codejar.d.ts",
   "files": [
-    "*.ts",
-    "*.js"
+    "src",
+    "dist",
+    "cursor/dist",
+    "cursor/src",
+    "cursor/package.json",
+    "line_numbers/dist",
+    "line_numbers/src",
+    "line_numbers/package.json"
   ],
   "scripts": {
-    "start": "tsc -w",
-    "size": "minify codejar.js --sourceType module | gzip-size"
+    "build": "npm-run-all --parallel build:*",
+    "build:codejar": "microbundle --external none",
+    "build:cursor": "microbundle --cwd cursor",
+    "build:linenumbers": "microbundle --cwd line_numbers",
+    "dev": "microbundle watch",
+    "size": "echo \"gzip size: $(gzip-size $npm_package_main)\""
   },
   "devDependencies": {
-    "babel-minify": "^0.5.1",
     "gzip-size-cli": "^3.0.0",
+    "microbundle": "^0.12.0-next.8",
+    "npm-run-all": "^4.1.5",
     "typescript": "^3.8.3"
+  },
+  "mangle": {
+    "regex": "^_"
+  },
+  "exports": {
+    ".": {
+      "browser": "./dist/codejar.module.js",
+      "umd": "./dist/codejar.umd.js",
+      "import": "./dist/codejar.module.js",
+      "require": "./dist/codejar.js"
+    },
+    "./line_numbers": {
+      "browser": "./line_numbers/dist/linenumbers.module.js",
+      "umd": "./line_numbers/dist/linenumbers.umd.js",
+      "import": "./line_numbers/dist/linenumbers.module.js",
+      "require": "./line_numbers/dist/linenumbers.js"
+    },
+    "./cursor": {
+      "browser": "./cursor/dist/cursor.module.js",
+      "umd": "./cursor/dist/cursor.umd.js",
+      "import": "./cursor/dist/cursor.module.js",
+      "require": "./cursor/dist/cursor.js"
+    }
   }
 }

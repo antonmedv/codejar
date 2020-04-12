@@ -1,0 +1,20 @@
+{
+  "name": "linenumbers",
+  "amdName": "codejarLinenumbers",
+  "version": "1.1.7",
+  "private": true,
+  "description": "Line numbers addon for CodeJar",
+  "main": "dist/linenumbers.js",
+  "module": "dist/linenumbers.module.js",
+  "umd:main": "dist/linenumbers.umd.js",
+  "source": "src/linenumbers.ts",
+  "types": "dist/line_numbers/src/linenumbers.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "microbundle build",
+    "dev": "microbundle watch"
+  },
+  "mangle": {
+    "regex": "^_"
+  }
+}

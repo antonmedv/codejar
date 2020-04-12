@@ -13,7 +13,7 @@ type Position = {
   dir?: "->" | "<-"
 }
 
-export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
+export const CodeJar = (editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) => {
   const options = {
     tab: "\t",
     ...opt
@@ -23,7 +23,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   let at = -1
   let focus = false
   let callback: (code: string) => void | undefined
-
   editor.setAttribute("contentEditable", "true")
   editor.setAttribute("spellcheck", "false")
   editor.style.outline = "none"
@@ -34,7 +33,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
 
   highlight(editor)
 
-  const debounceHighlight = debounce(() => {
+  const debounce = (cb: any, wait: number) => {
+    let timeout = 0
+    return (...args: any) => {
+      clearTimeout(timeout)
+      timeout = window.setTimeout(() => cb(...args), wait)
+    }
+  }
+  
+  const debounceHighlight = () =>  debounce(() => {
     const pos = save()
     highlight(editor)
     restore(pos)
@@ -48,12 +55,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
       && event.key !== "Alt"
       && !event.key.startsWith("Arrow")
   }
+
   const debounceRecordHistory = debounce((event: KeyboardEvent) => {
     if (shouldRecord(event)) {
       recordHistory()
       recording = false
     }
   }, 300)
+
 
   const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
     listeners.push([type, fn])
@@ -98,7 +107,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     if (callback) callback(toString())
   })
 
-  function save(): Position {
+  const save = (): Position => {
     const s = window.getSelection()!
     const pos: Position = {start: 0, end: 0, dir: undefined}
 
@@ -135,7 +144,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     return pos
   }
 
-  function restore(pos: Position) {
+   const restore = (pos: Position) => {
     const s = window.getSelection()!
     let startNode: Node | undefined, startOffset = 0
     let endNode: Node | undefined, endOffset = 0
@@ -183,7 +192,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     s.setBaseAndExtent(startNode, startOffset, endNode, endOffset)
   }
 
-  function beforeCursor() {
+  const beforeCursor = () => {
     const s = window.getSelection()!
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
@@ -192,7 +201,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     return r.toString()
   }
 
-  function afterCursor() {
+  const afterCursor = () => {
     const s = window.getSelection()!
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
@@ -201,7 +210,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     return r.toString()
   }
 
-  function handleNewLine(event: KeyboardEvent) {
+  const handleNewLine = (event: KeyboardEvent) => {
     if (event.key === "Enter") {
       event.preventDefault()
       const before = beforeCursor()
@@ -233,7 +242,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function handleSelfClosingCharacters(event: KeyboardEvent) {
+  const handleSelfClosingCharacters = (event: KeyboardEvent) => {
     const open = `([{'"`
     const close = `)]}'"`
     const codeAfter = afterCursor()
@@ -252,7 +261,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function handleTabCharacters(event: KeyboardEvent) {
+  const handleTabCharacters = (event: KeyboardEvent) => {
     if (event.key === "Tab") {
       event.preventDefault()
       if (event.shiftKey) {
@@ -274,7 +283,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function handleJumpToBeginningOfLine(event: KeyboardEvent) {
+  const handleJumpToBeginningOfLine = (event: KeyboardEvent) => {
     if (event.key === "ArrowLeft" && event.metaKey) {
       event.preventDefault()
       const before = beforeCursor()
@@ -297,7 +306,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function handleUndoRedo(event: KeyboardEvent) {
+  const handleUndoRedo = (event: KeyboardEvent) =>{
     if (isUndo(event)) {
       event.preventDefault()
       at--
@@ -320,7 +329,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function recordHistory() {
+  const recordHistory = () =>{
     if (!focus) return
 
     const html = editor.innerHTML
@@ -344,7 +353,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function handlePaste(event: ClipboardEvent) {
+  const handlePaste = (event: ClipboardEvent) => {
     event.preventDefault()
     const text = ((event as any).originalEvent || event).clipboardData.getData("text/plain")
     const pos = save()
@@ -360,7 +369,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
 
-  function visit(editor: HTMLElement, visitor: (el: Node) => "stop" | undefined) {
+   const visit = (editor: HTMLElement, visitor: (el: Node) => "stop" | undefined) => {
     const queue: Node[] = []
 
     if (editor.firstChild) queue.push(editor.firstChild)
@@ -378,27 +387,19 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     }
   }
 
-  function isCtrl(event: KeyboardEvent) {
+  const isCtrl = (event: KeyboardEvent) => {
     return event.metaKey || event.ctrlKey
   }
 
-  function isUndo(event: KeyboardEvent) {
+  const isUndo = (event: KeyboardEvent) => {
     return isCtrl(event) && !event.shiftKey && event.code === "KeyZ"
   }
 
-  function isRedo(event: KeyboardEvent) {
+  const isRedo = (event: KeyboardEvent) => {
     return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
   }
 
-  function debounce(cb: any, wait: number) {
-    let timeout = 0
-    return (...args: any) => {
-      clearTimeout(timeout)
-      timeout = window.setTimeout(() => cb(...args), wait)
-    }
-  }
-
-  function findPadding(text: string): [string, number, number] {
+  const findPadding = (text: string): [string, number, number] => {
     // Find beginning of previous line.
     let i = text.length - 1
     while (i >= 0 && text[i] !== "\n") i--
@@ -409,7 +410,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     return [text.substring(i, j) || "", i, j]
   }
 
-  function toString() {
+  const toString = () => {
     return editor.textContent || ""
   }
 

@@ -1,0 +1,20 @@
+{
+  "name": "cursor",
+  "amdName": "codejarCursor",
+  "version": "1.1.7",
+  "private": true,
+  "description": "Cursor addon for CodeJar",
+  "main": "dist/cursor.js",
+  "module": "dist/cursor.module.js",
+  "umd:main": "dist/cursor.umd.js",
+  "source": "src/cursor.ts",
+  "types": "dist/cursor/src/cursor.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "microbundle build",
+    "dev": "microbundle watch"
+  },
+  "mangle": {
+    "regex": "^_"
+  }
+}
