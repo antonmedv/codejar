@@ -23,8 +23,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   let at = -1
   let focus = false
   let callback: (code: string) => void | undefined
+  let prev: string // code content prior keydown event
+  let isFirefox = navigator.userAgent.toLowerCase().indexOf("firefox") > -1
 
-  editor.setAttribute("contentEditable", "true")
+  editor.setAttribute("contentEditable", isFirefox ? "true" : "plaintext-only")
   editor.setAttribute("spellcheck", "false")
   editor.style.outline = "none"
   editor.style.overflowWrap = "break-word"
@@ -63,6 +65,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   on("keydown", event => {
     if (event.defaultPrevented) return
 
+    prev = toString()
     handleNewLine(event)
     handleTabCharacters(event)
     handleJumpToBeginningOfLine(event)
@@ -78,7 +81,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     if (event.defaultPrevented) return
     if (event.isComposing) return
 
-    debounceHighlight()
+    if (prev !== toString()) debounceHighlight()
     debounceRecordHistory(event)
     if (callback) callback(toString())
   })
@@ -203,7 +206,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
 
   function handleNewLine(event: KeyboardEvent) {
     if (event.key === "Enter") {
-      event.preventDefault()
       const before = beforeCursor()
       const after = afterCursor()
 
@@ -215,19 +217,21 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
         newLinePadding += options.tab
       }
 
-      let text = "\n" + newLinePadding
-
-      // If cursor at the end of editor, add an extra newline, otherwise Enter will not work
-      if (after.length === 0) {
-        text += "\n"
+      if (isFirefox) {
+        event.preventDefault()
+        insert("\n" + newLinePadding)
+      } else {
+        // Normal browsers
+        if (newLinePadding.length > 0) {
+          event.preventDefault()
+          insert("\n" + newLinePadding)
+        }
       }
-
-      document.execCommand("insertHTML", false, text)
 
       // Place adjacent "}" on next line
       if (newLinePadding !== padding && after[0] === "}") {
         const pos = save()
-        document.execCommand("insertHTML", false, "\n" + padding)
+        insert("\n" + padding)
         restore(pos)
       }
     }
@@ -246,7 +250,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
       const pos = save()
       event.preventDefault()
       const text = event.key + close[open.indexOf(event.key)]
-      document.execCommand("insertText", false, text)
+      insert(text)
       pos.start = ++pos.end
       restore(pos)
     }
@@ -269,7 +273,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
           restore(pos)
         }
       } else {
-        document.execCommand("insertText", false, options.tab)
+        insert(options.tab)
       }
     }
   }
@@ -348,13 +352,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     event.preventDefault()
     const text = ((event as any).originalEvent || event).clipboardData.getData("text/plain")
     const pos = save()
-    document.execCommand("insertText", false, text)
-    let html = editor.innerHTML
-    html = html
-      .replace(/<div>/g, "\n")
-      .replace(/<br>/g, "")
-      .replace(/<\/div>/g, "")
-    editor.innerHTML = html
+    insert(text)
     highlight(editor)
     restore({start: pos.end + text.length, end: pos.end + text.length})
   }
@@ -388,6 +386,16 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
 
   function isRedo(event: KeyboardEvent) {
     return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
+  }
+
+  function insert(text: string) {
+    text = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+    document.execCommand("insertHTML", false, text)
   }
 
   function debounce(cb: any, wait: number) {
