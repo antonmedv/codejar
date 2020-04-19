@@ -1,6 +1,6 @@
 {
   "name": "@medv/codejar",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "An embeddable code editor for the browser",
   "license": "MIT",
   "repository": "antonmedv/codejar",
