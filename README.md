@@ -15,7 +15,7 @@
 Install CodeJar 🍯via npm:
 
 ```bash
-npm i @medv/codejar
+npm i codejar
 ```
 
 CodeJar 🍯 can be used via modules:
