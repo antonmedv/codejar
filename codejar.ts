@@ -13,6 +13,8 @@ type Position = {
   dir?: "->" | "<-"
 }
 
+export type CodeJar = ReturnType<typeof CodeJar>;
+
 export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
   const options = {
     tab: "\t",

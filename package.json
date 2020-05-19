@@ -7,6 +7,7 @@
   "author": "Anton Medvedev <anton@medv.io>",
   "homepage": "https://medv.io/codejar/",
   "main": "codejar.js",
+  "types": "codejar.d.ts",
   "files": [
     "*.ts",
     "*.js"
