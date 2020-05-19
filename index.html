@@ -54,7 +54,7 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = new CodeJar(editor, highlight)
+  const jar = CodeJar(editor, highlight)
 
   jar.updateCode(localStorage.getItem('code'))
   jar.onUpdate(code => {

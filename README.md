@@ -34,7 +34,7 @@ Create element and init:
 ```html
 <div class="editor"></div>
 <script>
-  let jar = new CodeJar(document.querySelector('.editor'), Prism.highlightElement)
+  let jar = CodeJar(document.querySelector('.editor'), Prism.highlightElement)
 </script>
 ```
 
@@ -47,7 +47,7 @@ const highlight = (editor: HTMLElement) => {
   editor.innerHTML = code
 }
 
-let jar = new CodeJar(editor, highlight)
+let jar = CodeJar(editor, highlight)
 ```
 
 Third argument to `CodeJar` is options:
@@ -57,7 +57,7 @@ let options = {
   tab: ' '.repeat(4), // default is \t
 }
 
-let jar = new CodeJar(editor, highlight, options)
+let jar = CodeJar(editor, highlight, options)
 ```
 
 Some styles may be applied to our editor to make it better looking:
