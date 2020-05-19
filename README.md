@@ -2,6 +2,9 @@
 <h3 align="center">CodeJar – an embeddable code editor for the browser</h3>
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar/screenshot.png" width="709"></a></p>
 
+[![npm](https://img.shields.io/npm/v/codejar?color=brightgreen)](https://www.npmjs.com/package/codejar)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/codejar?label=size)](https://bundlephobia.com/result?p=codejar)
+
 ## Features
 
 * Lightweight (**2 kB** only)
