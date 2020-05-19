@@ -13,9 +13,7 @@ type Position = {
   dir?: "->" | "<-"
 }
 
-export type CodeJar = ReturnType<typeof CodeJar>;
-
-export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
+export function CodeJarConstructor(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
   const options = {
     tab: "\t",
     ...opt
@@ -442,3 +440,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     },
   }
 }
+
+
+// Allows the use of `new CodeJar()` in TypeScript without raising the
+// "TS7009: 'new' expression, whose target lacks a construct signature, implicitly has an 'any' type"
+// warning.
+export declare interface CodeJarConstructor {
+  new(...args: Parameters<typeof CodeJarConstructor>): ReturnType<typeof CodeJarConstructor>;
+}
+// Allows the use of `CodeJar` as a type as well as a value, e.g.
+// `let jar: CodeJar = new CodeJar(...)`
+export type CodeJar = ReturnType<typeof CodeJarConstructor>;
+export const CodeJar: CodeJarConstructor = CodeJarConstructor as any;
