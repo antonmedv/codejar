@@ -135,6 +135,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
         if (pos.dir != "->") pos.start += el.nodeValue!.length
         if (pos.dir != "<-") pos.end += el.nodeValue!.length
       }
+                                 
+      return
     })
 
     return pos
@@ -174,6 +176,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
         }
       }
       current += len
+      return
     })
 
     // If everything deleted place cursor at editor
