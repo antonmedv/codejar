@@ -15,13 +15,13 @@
 
 ## Getting Started
 
-Install CodeJar 🍯via npm:
+Install CodeJar 🍯 &nbsp; via npm:
 
 ```bash
 npm i codejar
 ```
 
-CodeJar 🍯 can be used via modules:
+CodeJar 🍯 &nbsp; can be used via modules:
 
 ```html
 <script type="module">
