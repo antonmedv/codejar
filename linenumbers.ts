@@ -14,6 +14,8 @@ export function withLineNumbers(
     class: "codejar-linenumbers",
     wrapClass: "codejar-wrap",
     width: "35px",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    color: "",
     ...options
   }
 
