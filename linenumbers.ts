@@ -2,6 +2,8 @@ type Options = {
   class: string
   wrapClass: string
   width: string
+  backgroundColor: string
+  color: string
 }
 
 export function withLineNumbers(
@@ -53,8 +55,8 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   lineNumbers.style.bottom = "0px"
   lineNumbers.style.width = opts.width
   lineNumbers.style.overflow = "hidden"
-  lineNumbers.style.backgroundColor = "rgba(255, 255, 255, 0.05)"
-  lineNumbers.style.color = "#fff"
+  lineNumbers.style.backgroundColor = opts.backgroundColor || "rgba(255, 255, 255, 0.05)"
+  lineNumbers.style.color = opts.color || css.color
   lineNumbers.style.setProperty("mix-blend-mode", "difference")
 
   // Copy editor styles
