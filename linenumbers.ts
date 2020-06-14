@@ -57,7 +57,7 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   lineNumbers.style.bottom = "0px"
   lineNumbers.style.width = opts.width
   lineNumbers.style.overflow = "hidden"
-  lineNumbers.style.backgroundColor = opts.backgroundColor || "rgba(255, 255, 255, 0.05)"
+  lineNumbers.style.backgroundColor = opts.backgroundColor
   lineNumbers.style.color = opts.color || css.color
   lineNumbers.style.setProperty("mix-blend-mode", "difference")
 
