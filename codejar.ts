@@ -18,6 +18,7 @@ export type CodeJar = ReturnType<typeof CodeJar>
 export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
   const options = {
     tab: "\t",
+    indentRegex: /[{]/,
     ...opt
   }
   let listeners: [string, any][] = []
@@ -215,7 +216,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
       let newLinePadding = padding
 
       // If last symbol is "{" ident new line
-      if (before[before.length - 1] === "{") {
+      // Allow user defines indent rule
+      if (before[before.length - 1].match(indentRegex)) {
         newLinePadding += options.tab
       }
 
