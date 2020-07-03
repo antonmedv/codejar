@@ -51,10 +51,16 @@ let jar = CodeJar(editor, highlight)
 ```
 
 Third argument to `CodeJar` is options:
+  - Options.tab replace "tabs" and "auto indent tabs" to given string
+    - Can use CSS tab-size instead
+    - If so, "auto indent tabs" can be removed with a single "backspace"
+  - Options.indentRegex allows indent rule to be customized
+    - Auto-tab if the last character match the given regex while pressing Enter
 
 ```js
 let options = {
   tab: ' '.repeat(4), // default is \t
+  indentRegex: /[([{'"]/ // default is /[{]/
 }
 
 let jar = CodeJar(editor, highlight, options)
