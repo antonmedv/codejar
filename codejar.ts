@@ -72,7 +72,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     prev = toString()
     handleNewLine(event)
     handleTabCharacters(event)
-    handleJumpToBeginningOfLine(event)
     handleSelfClosingCharacters(event)
     handleUndoRedo(event)
     if (shouldRecord(event) && !recording) {
@@ -279,29 +278,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
         }
       } else {
         insert(options.tab)
-      }
-    }
-  }
-
-  function handleJumpToBeginningOfLine(event: KeyboardEvent) {
-    if (event.key === "ArrowLeft" && event.metaKey) {
-      preventDefault(event)
-      const before = beforeCursor()
-      let [padding, start, end] = findPadding(before)
-      if (before.endsWith(padding)) {
-        if (event.shiftKey) {
-          const pos = save()
-          restore({start, end: pos.end}) // Select from line start.
-        } else {
-          restore({start, end: start}) // Jump to line start.
-        }
-      } else {
-        if (event.shiftKey) {
-          const pos = save()
-          restore({start: end, end: pos.end}) // Select from beginning of text.
-        } else {
-          restore({start: end, end}) // Jump to beginning of text.
-        }
       }
     }
   }
