@@ -1,5 +1,6 @@
 type Options = {
   tab: string
+  indentOn: RegExp
 }
 
 type HistoryRecord = {
@@ -16,9 +17,9 @@ type Position = {
 export type CodeJar = ReturnType<typeof CodeJar>
 
 export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void, opt: Partial<Options> = {}) {
-  const options = {
+  const options: Options = {
     tab: "\t",
-    indentRegex: /[{]/,
+    indentOn: /{$/,
     ...opt
   }
   let listeners: [string, any][] = []
@@ -217,7 +218,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
 
       // If last symbol is "{" ident new line
       // Allow user defines indent rule
-      if (before[before.length - 1].match(indentRegex)) {
+      if (options.indentOn.test(before)) {
         newLinePadding += options.tab
       }
 

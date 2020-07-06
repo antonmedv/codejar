@@ -54,7 +54,9 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = CodeJar(editor, highlight)
+  const jar = CodeJar(editor, highlight, {
+    indentOn: /[(\[{]$/
+  })
 
   jar.updateCode(localStorage.getItem('code'))
   jar.onUpdate(code => {

@@ -29,7 +29,7 @@ CodeJar 🍯 &nbsp; can be used via modules:
 </script>
 ```
 
-Create element and init:
+Create an element and init the CodeJar 🍯:
 
 ```html
 <div class="editor"></div>
@@ -38,7 +38,7 @@ Create element and init:
 </script>
 ```
 
-Second argument to `CodeJar` is highligting function (in this example [PrismJS](https://prismjs.com)), but any function may be used:
+Second argument to `CodeJar` is a highligting function (in this example [PrismJS](https://prismjs.com)), but any function may be used:
 
 ```ts
 const highlight = (editor: HTMLElement) => {
@@ -51,16 +51,16 @@ let jar = CodeJar(editor, highlight)
 ```
 
 Third argument to `CodeJar` is options:
-  - Options.tab replace "tabs" and "auto indent tabs" to given string
-    - Can use CSS tab-size instead
-    - If so, "auto indent tabs" can be removed with a single "backspace"
-  - Options.indentRegex allows indent rule to be customized
-    - Auto-tab if the last character match the given regex while pressing Enter
+  - `tab: string` replaces "tabs" with given string. Default: `\t`.
+    - Note: use css rule `tab-size` to customize size.
+  - `identOn: RegExp` allows auto indent rule to be customized. Default `{$`
+    - Auto-tab if the text before cursor match the given regex while pressing Enter.
+       
 
 ```js
 let options = {
-  tab: ' '.repeat(4), // default is \t
-  indentRegex: /[([{'"]/ // default is /[{]/
+  tab: ' '.repeat(4), // default is '\t'
+  indentOn: /[(\[]$/, // default is /{$/
 }
 
 let jar = CodeJar(editor, highlight, options)
