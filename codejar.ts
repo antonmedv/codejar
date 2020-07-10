@@ -223,19 +223,19 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
 
       if (isFirefox) {
         preventDefault(event)
-        insert("\n" + newLinePadding)
+        insert("\r\n" + newLinePadding)
       } else {
         // Normal browsers
         if (newLinePadding.length > 0) {
           preventDefault(event)
-          insert("\n" + newLinePadding)
+          insert("\r\n" + newLinePadding)
         }
       }
 
       // Place adjacent "}" on next line
       if (newLinePadding !== padding && after[0] === "}") {
         const pos = save()
-        insert("\n" + padding)
+        insert("\r\n" + padding)
         restore(pos)
       }
     }
