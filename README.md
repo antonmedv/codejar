@@ -38,7 +38,7 @@ Create an element and init the CodeJar 🍯:
 </script>
 ```
 
-Second argument to `CodeJar` is a highligting function (in this example [PrismJS](https://prismjs.com)), but any function may be used:
+Second argument to `CodeJar` is a highlighting function (in this example [PrismJS](https://prismjs.com)), but any function may be used:
 
 ```ts
 const highlight = (editor: HTMLElement) => {
