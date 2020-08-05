@@ -55,7 +55,8 @@ Third argument to `CodeJar` is options:
     - Note: use css rule `tab-size` to customize size.
   - `identOn: RegExp` allows auto indent rule to be customized. Default `{$`
     - Auto-tab if the text before cursor match the given regex while pressing Enter.
-       
+  - `spellcheck: boolean` enables spellchecking on the editor. Default `false`
+
 
 ```js
 let options = {
