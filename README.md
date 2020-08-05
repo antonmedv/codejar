@@ -56,6 +56,7 @@ Third argument to `CodeJar` is options:
   - `identOn: RegExp` allows auto indent rule to be customized. Default `{$`
     - Auto-tab if the text before cursor match the given regex while pressing Enter.
   - `spellcheck: boolean` enables spellchecking on the editor. Default `false`
+  - `addClosing: boolean` automatically adds closing brackets, quotes. Default `true`
 
 
 ```js

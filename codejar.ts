@@ -2,6 +2,7 @@ type Options = {
   tab: string
   indentOn: RegExp
   spellcheck: boolean
+  addClosing: boolean
 }
 
 type HistoryRecord = {
@@ -22,6 +23,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     tab: "\t",
     indentOn: /{$/,
     spellcheck: false,
+    addClosing: true
     ...opt
   }
   let listeners: [string, any][] = []
@@ -74,7 +76,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     prev = toString()
     handleNewLine(event)
     handleTabCharacters(event)
-    handleSelfClosingCharacters(event)
+    if (options.addClosing) handleSelfClosingCharacters(event)
     handleUndoRedo(event)
     if (shouldRecord(event) && !recording) {
       recordHistory()
