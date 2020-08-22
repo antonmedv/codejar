@@ -25,10 +25,7 @@ export function withLineNumbers(
 
     if (!lineNumbers) {
       lineNumbers = init(editor, opts)
-    }
-
-    if (!editor.onscroll) {
-      editor.onscroll = () => lineNumbers.style.top = `-${editor.scrollTop}px`;
+      editor.addEventListener("scroll", () => lineNumbers.style.top = `-${editor.scrollTop}px`);
     }
 
     const code = editor.textContent || ""
