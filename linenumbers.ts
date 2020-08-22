@@ -27,6 +27,10 @@ export function withLineNumbers(
       lineNumbers = init(editor, opts)
     }
 
+    if (!editor.onscroll) {
+      editor.onscroll = () => lineNumbers.style.top = `-${editor.scrollTop}px`;
+    }
+
     const code = editor.textContent || ""
     const linesCount = code.replace(/\n+$/, "\n").split("\n").length + 1
 
@@ -46,32 +50,38 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   wrap.className = opts.wrapClass
   wrap.style.position = "relative"
 
-  const lineNumbers = document.createElement("div")
-  lineNumbers.className = opts.class
-  wrap.appendChild(lineNumbers)
+  const gutter = document.createElement("div")
+  gutter.className = opts.class
+  wrap.appendChild(gutter)
 
   // Add own styles
-  lineNumbers.style.position = "absolute"
-  lineNumbers.style.top = "0px"
-  lineNumbers.style.left = "0px"
-  lineNumbers.style.bottom = "0px"
-  lineNumbers.style.width = opts.width
-  lineNumbers.style.overflow = "hidden"
-  lineNumbers.style.backgroundColor = opts.backgroundColor
-  lineNumbers.style.color = opts.color || css.color
-  lineNumbers.style.setProperty("mix-blend-mode", "difference")
+  gutter.style.position = "absolute"
+  gutter.style.top = "0px"
+  gutter.style.left = "0px"
+  gutter.style.bottom = "0px"
+  gutter.style.width = opts.width
+  gutter.style.overflow = "hidden"
+  gutter.style.backgroundColor = opts.backgroundColor
+  gutter.style.color = opts.color || css.color
+  gutter.style.setProperty("mix-blend-mode", "difference")
 
   // Copy editor styles
-  lineNumbers.style.fontFamily = css.fontFamily
-  lineNumbers.style.fontSize = css.fontSize
-  lineNumbers.style.lineHeight = css.lineHeight
-  lineNumbers.style.paddingTop = css.paddingTop
-  lineNumbers.style.paddingLeft = css.paddingLeft
-  lineNumbers.style.borderTopLeftRadius = css.borderTopLeftRadius
-  lineNumbers.style.borderBottomLeftRadius = css.borderBottomLeftRadius
+  gutter.style.fontFamily = css.fontFamily
+  gutter.style.fontSize = css.fontSize
+  gutter.style.lineHeight = css.lineHeight
+  gutter.style.paddingTop = css.paddingTop
+  gutter.style.paddingLeft = css.paddingLeft
+  gutter.style.borderTopLeftRadius = css.borderTopLeftRadius
+  gutter.style.borderBottomLeftRadius = css.borderBottomLeftRadius
+
+  // Add line numbers
+  const lineNumbers = document.createElement("div");
+  lineNumbers.style.position = "relative";
+  lineNumbers.style.top = "0px"
+  gutter.appendChild(lineNumbers)
 
   // Tweak editor styles
-  editor.style.paddingLeft = `calc(${opts.width} + ${lineNumbers.style.paddingLeft})`
+  editor.style.paddingLeft = `calc(${opts.width} + ${gutter.style.paddingLeft})`
   editor.style.whiteSpace = "pre"
 
   // Swap editor with a wrap

@@ -23,7 +23,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     tab: "\t",
     indentOn: /{$/,
     spellcheck: false,
-    addClosing: true
+    addClosing: true,
     ...opt
   }
   let listeners: [string, any][] = []
