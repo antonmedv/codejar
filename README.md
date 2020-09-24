@@ -53,7 +53,7 @@ let jar = CodeJar(editor, highlight)
 Third argument to `CodeJar` is options:
   - `tab: string` replaces "tabs" with given string. Default: `\t`.
     - Note: use css rule `tab-size` to customize size.
-  - `identOn: RegExp` allows auto indent rule to be customized. Default `{$`
+  - `indentOn: RegExp` allows auto indent rule to be customized. Default `{$`
     - Auto-tab if the text before cursor match the given regex while pressing Enter.
   - `spellcheck: boolean` enables spellchecking on the editor. Default `false`
   - `addClosing: boolean` automatically adds closing brackets, quotes. Default `true`
