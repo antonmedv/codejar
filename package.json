@@ -27,6 +27,9 @@
   "release-it": {
     "github": {
       "release": true
+    },
+    "hooks": {
+      "after:bump": "npm run build"
     }
   }
 }
