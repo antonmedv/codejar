@@ -366,11 +366,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
   function isUndo(event: KeyboardEvent) {
-    return isCtrl(event) && !event.shiftKey && event.code === "KeyZ"
+    return isCtrl(event) && !event.shiftKey && event.key === "z"
   }
 
   function isRedo(event: KeyboardEvent) {
-    return isCtrl(event) && event.shiftKey && event.code === "KeyZ"
+    return isCtrl(event) && event.shiftKey && event.key === "z"
   }
 
   function insert(text: string) {
