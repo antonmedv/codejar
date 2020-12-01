@@ -336,16 +336,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   function handlePaste(event: ClipboardEvent) {
     preventDefault(event)
     const text = ((event as any).originalEvent || event).clipboardData.getData("text/plain")
-    const sel = window.getSelection()
-    const selection = !sel.isCollapsed
     const pos = save()
     insert(text)
     highlight(editor)
-    if (selection) {
-      restore({start: pos.end, end: pos.end})
-    } else {
-      restore({start: pos.end + text.length, end: pos.end + text.length})
-    }
+    restore({start: pos.start + text.length, end: pos.start + text.length})
   }
 
 
