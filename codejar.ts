@@ -249,12 +249,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     const open = `([{'"`
     const close = `)]}'"`
     const codeAfter = afterCursor()
-    if (close.includes(event.key) && codeAfter.substr(0, 1) === event.key) {
+    const codeBefore = beforeCursor();
+    if (close.includes(event.key) && codeBefore.substr(codeBefore.length-1) !== "\\" && codeAfter.substr(0, 1) === event.key) {
       const pos = save()
       preventDefault(event)
       pos.start = ++pos.end
       restore(pos)
-    } else if (open.includes(event.key)) {
+    } else if (open.includes(event.key) && codeBefore.substr(codeBefore.length-1) !== "\\") {
       const pos = save()
       preventDefault(event)
       const text = event.key + close[open.indexOf(event.key)]
