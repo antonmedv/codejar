@@ -250,7 +250,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
     const close = `)]}'"`
     const codeAfter = afterCursor()
     const codeBefore = beforeCursor()
-    var escapeCharacter = `'"`.includes(event.key) && codeBefore.substr(codeBefore.length-1) !== "\\"
+    const escapeCharacter = `'"`.includes(event.key) && codeBefore.substr(codeBefore.length-1) !== "\\"
     if (close.includes(event.key) && escapeCharacter && codeAfter.substr(0, 1) === event.key) {
       const pos = save()
       preventDefault(event)
