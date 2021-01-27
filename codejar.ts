@@ -109,7 +109,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   })
 
   function save(): Position {
-    const s = window.getSelection()!
+    let s = window.getSelection()!
+    if (editor?.parentNode?.nodeType === 11 /* DocumentFragment */) {
+      // @ts-ignore
+      s = editor.parentNode.getSelection()
+    }
     const pos: Position = {start: 0, end: 0, dir: undefined}
 
     visit(editor, el => {
@@ -146,7 +150,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
   function restore(pos: Position) {
-    const s = window.getSelection()!
+    let s = window.getSelection()!
+    if (editor?.parentNode?.nodeType === 11 /* DocumentFragment */) {
+      // @ts-ignore
+      s = editor.parentNode.getSelection()
+    }
     let startNode: Node | undefined, startOffset = 0
     let endNode: Node | undefined, endOffset = 0
 
@@ -194,7 +202,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
   function beforeCursor() {
-    const s = window.getSelection()!
+    let s = window.getSelection()!
+    if (editor?.parentNode?.nodeType === 11 /* DocumentFragment */) {
+      // @ts-ignore
+      s = editor.parentNode.getSelection()
+    }
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
     r.selectNodeContents(editor)
@@ -203,7 +215,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement) => void
   }
 
   function afterCursor() {
-    const s = window.getSelection()!
+    let s = window.getSelection()!
+    if (editor?.parentNode?.nodeType === 11 /* DocumentFragment */) {
+      // @ts-ignore
+      s = editor.parentNode.getSelection()
+    }
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
     r.selectNodeContents(editor)
