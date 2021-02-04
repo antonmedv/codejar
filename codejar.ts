@@ -50,7 +50,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   let isLegacy = false // true if plaintext-only is not supported
 
   highlight(editor)
-  if (editor.contentEditable !== "plaintext-only") isLegacy = true
+  if (editor.contentEditable !== 'plaintext-only') isLegacy = true
   if (isLegacy) editor.setAttribute('contenteditable', 'true')
 
   const debounceHighlight = debounce(() => {
@@ -129,13 +129,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     let {anchorNode, anchorOffset, focusNode, focusOffset} = s
     // selection anchor and focus are expected to be text nodes, so normalize them
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
-      const node = document.createTextNode("")
+      const node = document.createTextNode('')
       anchorNode.insertBefore(node, anchorNode.childNodes[anchorOffset])
       anchorNode = node
       anchorOffset = 0
     }
     if (focusNode.nodeType === Node.ELEMENT_NODE) {
-      const node = document.createTextNode("")
+      const node = document.createTextNode('')
       focusNode.insertBefore(node, focusNode.childNodes[focusOffset])
       focusNode = node
       focusOffset = 0
