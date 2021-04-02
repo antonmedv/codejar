@@ -378,7 +378,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function handlePaste(event: ClipboardEvent) {
     preventDefault(event)
-    const text = ((event as any).originalEvent || event).clipboardData.getData('text/plain')
+    const text = ((event as any).originalEvent || event)
+      .clipboardData
+      .getData('text/plain')
+      .replace(/\r/g, '')
     const pos = save()
     insert(text)
     highlight(editor)
