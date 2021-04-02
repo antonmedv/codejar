@@ -60,6 +60,7 @@ Third argument to `CodeJar` is options:
   - `preserveIdent: boolean` keeps indent levels on new line. Default `true`.
   - `addClosing: boolean` automatically adds closing brackets, quotes. Default `true`.
   - `history` records history. Default `true`.
+  - `window` window object. Default: `window`.
 
 
 ```js

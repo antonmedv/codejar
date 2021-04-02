@@ -1,3 +1,5 @@
+const globalWindow = window
+
 type Options = {
   tab: string
   indentOn: RegExp
@@ -6,6 +8,7 @@ type Options = {
   preserveIdent: boolean
   addClosing: boolean
   history: boolean
+  window: typeof window
 }
 
 type HistoryRecord = {
@@ -30,8 +33,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     preserveIdent: true,
     addClosing: true,
     history: true,
+    window: globalWindow,
     ...opt
   }
+
+  const window = options.window
+  const document = window.document
+
   let listeners: [string, any][] = []
   let history: HistoryRecord[] = []
   let at = -1
@@ -118,7 +126,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   })
 
   function save(): Position {
-    const s = window.getSelection()!
+    const s = getSelection()
     const pos: Position = {start: 0, end: 0, dir: undefined}
 
     visit(editor, el => {
@@ -155,7 +163,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function restore(pos: Position) {
-    const s = window.getSelection()!
+    const s = getSelection()
     let startNode: Node | undefined, startOffset = 0
     let endNode: Node | undefined, endOffset = 0
 
@@ -203,7 +211,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function beforeCursor() {
-    const s = window.getSelection()!
+    const s = getSelection()
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
     r.selectNodeContents(editor)
@@ -212,7 +220,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function afterCursor() {
-    const s = window.getSelection()!
+    const s = getSelection()
     const r0 = s.getRangeAt(0)
     const r = document.createRange()
     r.selectNodeContents(editor)
@@ -443,6 +451,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function preventDefault(event: Event) {
     event.preventDefault()
+  }
+
+  function getSelection() {
+    if (editor.parentNode?.nodeType == Node.DOCUMENT_FRAGMENT_NODE) {
+      return (editor.parentNode as Document).getSelection()!
+    }
+    return window.getSelection()!
   }
 
   return {

@@ -41,10 +41,11 @@
 <body>
 <main>
     <div class="editor language-js"></div>
+    <my-editor></my-editor>
 </main>
 <script type="module">
   import {CodeJar} from './codejar.js'
-  import {withLineNumbers} from './linenumbers.js';
+  import {withLineNumbers} from './linenumbers.js'
 
   const editor = document.querySelector('.editor')
 
@@ -63,6 +64,46 @@
   jar.onUpdate(code => {
     localStorage.setItem('code', code)
   })
+
+
+  class Ed extends HTMLElement {
+    constructor() {
+      super() // always call super() first in the constructor.
+
+      // Attach a shadow root to <fancy-tabs>.
+      const shadowRoot = this.attachShadow({mode: 'open'})
+      shadowRoot.innerHTML = `
+      <style>
+              .editor {
+            background: #fff;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 400;
+            min-height: 240px;
+            letter-spacing: normal;
+            line-height: 20px;
+            padding: 10px;
+            tab-size: 4;
+        }
+</style>
+          <div class="editor language-js"></div>
+
+      `
+
+      const highlight = editor => {
+        // highlight.js does not trim old tags,
+        // let's do it by this hack.
+        editor.textContent = editor.textContent
+        hljs.highlightBlock(editor)
+      }
+
+      const editor = shadowRoot.querySelector('.editor')
+      const jar = CodeJar(editor, highlight, {
+        indentOn: /[(\[{]$/
+      })
+    }
+    }
+      customElements.define('my-editor', Ed)
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
 </body>
