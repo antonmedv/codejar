@@ -294,15 +294,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     } else if (
       open.includes(event.key)
       && !escapeCharacter
-      // Only if string or have empty space after
       && (`"'`.includes(event.key) || ['', ' ', '\n'].includes(charAfter))
     ) {
-      // Place closing char.
-      const pos = save()
       preventDefault(event)
-      const text = event.key + close[open.indexOf(event.key)]
+      const pos = save()
+      const wrapText = pos.start == pos.end ? '' : getSelection().toString()
+      const text = event.key + wrapText + close[open.indexOf(event.key)]
       insert(text)
-      pos.start = ++pos.end
+      pos.start++
+      pos.end++
       restore(pos)
     }
   }
