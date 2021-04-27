@@ -464,8 +464,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   return {
-    updateOptions(options: Partial<Options>) {
-      options = {...options, ...options}
+    updateOptions(newOptions: Partial<Options>) {
+      Object.assign(options, newOptions);
     },
     updateCode(code: string) {
       editor.textContent = code
