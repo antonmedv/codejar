@@ -43,8 +43,8 @@
     <div class="editor language-js"></div>
 </main>
 <script type="module">
-  import {CodeJar} from './codejar.js'
-  import {withLineNumbers} from './linenumbers.js'
+  import {CodeJar} from './dist/es/index.js'
+  import {withLineNumbers} from './dist/es/index.js'
 
   const editor = document.querySelector('.editor')
 
@@ -55,7 +55,7 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = CodeJar(editor, withLineNumbers(highlight), {
+  const jar = new CodeJar(editor, withLineNumbers(highlight), {
     indentOn: /[(\[{]$/
   })
 
