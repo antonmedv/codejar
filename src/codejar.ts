@@ -25,7 +25,7 @@ export type Position = {
 export class CodeJar {
     private window: Window;
     private document: Document;
-    private listeners: [string, any][];
+    private readonly listeners: [string, any][];
     private readonly history: HistoryRecord[];
     private at: number;
     private focus: boolean;
@@ -33,7 +33,7 @@ export class CodeJar {
     private prev: string // code content prior keydown event
     private readonly isFirefox: boolean;
     private readonly editor: HTMLElement;
-    private options: Options;
+    private readonly options: Options;
     private readonly highlight: (e: HTMLElement, pos?: Position) => void;
     private recording = false;
 
@@ -116,7 +116,7 @@ export class CodeJar {
     }
 
     private shouldRecord = (event: KeyboardEvent): boolean => {
-        return !this.isUndo(event) && !this.isRedo(event)
+        return !CodeJar.isUndo(event) && !CodeJar.isRedo(event)
             && event.key !== 'Meta'
             && event.key !== 'Control'
             && event.key !== 'Alt'
@@ -158,7 +158,7 @@ export class CodeJar {
         const s = getSelection()
         const pos: Position = {start: 0, end: 0, dir: undefined}
 
-        this.visit(this.editor, el => {
+        CodeJar.visit(this.editor, el => {
             if (el === s.anchorNode && el === s.focusNode) {
                 pos.start += s.anchorOffset
                 pos.end += s.focusOffset
@@ -209,7 +209,7 @@ export class CodeJar {
 
         let current = 0
 
-        this.visit(this.editor, el => {
+        CodeJar.visit(this.editor, el => {
             if (el.nodeType !== Node.TEXT_NODE) return
 
             const len = (el.nodeValue || '').length
@@ -262,7 +262,7 @@ export class CodeJar {
             const before = this.beforeCursor()
             const after = this.afterCursor()
 
-            let [padding] = this.findPadding(before)
+            let [padding] = CodeJar.findPadding(before)
             let newLinePadding = padding
 
             // If last symbol is "{" ident new line
@@ -273,9 +273,9 @@ export class CodeJar {
 
             // Preserve padding
             if (newLinePadding.length > 0) {
-                this.preventDefault(event)
+                CodeJar.preventDefault(event)
                 event.stopPropagation()
-                this.insert('\n' + newLinePadding)
+                CodeJar.insert('\n' + newLinePadding)
             } else {
                 this.firefoxNewLineFix(event)
             }
@@ -283,7 +283,7 @@ export class CodeJar {
             // Place adjacent "}" on next line
             if (newLinePadding !== padding && after[0] === '}') {
                 const pos = this.save()
-                this.insert('\n' + padding)
+                CodeJar.insert('\n' + padding)
                 this.restore(pos)
             }
         }
@@ -293,15 +293,15 @@ export class CodeJar {
         // Firefox does not support plaintext-only mode
         // and puts <div><br></div> on Enter. Let's help.
         if (this.isFirefox && event.key === 'Enter') {
-            this.preventDefault(event)
+            CodeJar.preventDefault(event)
             event.stopPropagation()
             if (this.afterCursor() == '') {
-                this.insert('\n ')
+                CodeJar.insert('\n ')
                 const pos = this.save()
                 pos.start = --pos.end
                 this.restore(pos)
             } else {
-                this.insert('\n')
+                CodeJar.insert('\n')
             }
         }
     }
@@ -317,7 +317,7 @@ export class CodeJar {
             // We already have closing char next to cursor.
             // Move one char to right.
             const pos = this.save()
-            this.preventDefault(event)
+            CodeJar.preventDefault(event)
             pos.start = ++pos.end
             this.restore(pos)
         } else if (
@@ -325,11 +325,11 @@ export class CodeJar {
             && !escapeCharacter
             && (`"'`.includes(event.key) || ['', ' ', '\n'].includes(charAfter))
         ) {
-            this.preventDefault(event)
+            CodeJar.preventDefault(event)
             const pos = this.save()
             const wrapText = pos.start == pos.end ? '' : getSelection().toString()
             const text = event.key + wrapText + close[open.indexOf(event.key)]
-            this.insert(text)
+            CodeJar.insert(text)
             pos.start++
             pos.end++
             this.restore(pos)
@@ -338,10 +338,10 @@ export class CodeJar {
 
     private handleTabCharacters(event: KeyboardEvent) {
         if (event.key === 'Tab') {
-            this.preventDefault(event)
+            CodeJar.preventDefault(event)
             if (event.shiftKey) {
                 const before = this.beforeCursor()
-                let [padding, start] = this.findPadding(before)
+                let [padding, start] = CodeJar.findPadding(before)
                 if (padding.length > 0) {
                     const pos = this.save()
                     // Remove full length tab or just remaining padding
@@ -353,14 +353,14 @@ export class CodeJar {
                     this.restore(pos)
                 }
             } else {
-                this.insert(this.options.tab)
+                CodeJar.insert(this.options.tab)
             }
         }
     }
 
     private handleUndoRedo(event: KeyboardEvent) {
-        if (this.isUndo(event)) {
-            this.preventDefault(event)
+        if (CodeJar.isUndo(event)) {
+            CodeJar.preventDefault(event)
             this.at--
             const record = this.history[this.at]
             if (record) {
@@ -369,8 +369,8 @@ export class CodeJar {
             }
             if (this.at < 0) this.at = 0
         }
-        if (this.isRedo(event)) {
-            this.preventDefault(event)
+        if (CodeJar.isRedo(event)) {
+            CodeJar.preventDefault(event)
             this.at++
             const record = this.history[this.at]
             if (record) {
@@ -412,19 +412,19 @@ export class CodeJar {
     }
 
     private handlePaste(event: ClipboardEvent) {
-        this.preventDefault(event)
+        CodeJar.preventDefault(event)
         const text = ((event as any).originalEvent || event)
             .clipboardData
             .getData('text/plain')
             .replace(/\r/g, '')
         const pos = this.save()
-        this.insert(text)
+        CodeJar.insert(text)
         this.highlight(this.editor)
         this.restore({start: pos.start + text.length, end: pos.start + text.length})
     }
 
 
-    private visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
+    private static visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
         const queue: Node[] = []
 
         if (editor.firstChild) queue.push(editor.firstChild)
@@ -442,19 +442,19 @@ export class CodeJar {
         }
     }
 
-    private isCtrl(event: KeyboardEvent) {
+    private static isCtrl(event: KeyboardEvent) {
         return event.metaKey || event.ctrlKey
     }
 
-    private isUndo(event: KeyboardEvent) {
-        return this.isCtrl(event) && !event.shiftKey && event.key === 'z'
+    private static isUndo(event: KeyboardEvent) {
+        return CodeJar.isCtrl(event) && !event.shiftKey && event.key === 'z'
     }
 
-    private isRedo(event: KeyboardEvent) {
-        return this.isCtrl(event) && event.shiftKey && event.key === 'z'
+    private static isRedo(event: KeyboardEvent) {
+        return CodeJar.isCtrl(event) && event.shiftKey && event.key === 'z'
     }
 
-    private insert(text: string) {
+    private static insert(text: string) {
         text = text
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -472,7 +472,7 @@ export class CodeJar {
         }
     }
 
-    private findPadding(text: string): [string, number, number] {
+    private static findPadding(text: string): [string, number, number] {
         // Find beginning of previous line.
         let i = text.length - 1
         while (i >= 0 && text[i] !== '\n') i--
@@ -487,7 +487,7 @@ export class CodeJar {
         return this.editor.textContent || ''
     }
 
-    private preventDefault(event: Event) {
+    private static preventDefault(event: Event) {
         event.preventDefault()
     }
 

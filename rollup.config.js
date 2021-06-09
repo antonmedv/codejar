@@ -2,7 +2,6 @@
 import typescript from "@rollup/plugin-typescript";
 import {terser} from "rollup-plugin-terser";
 import {namespaceName, scriptName} from "./rollup.globals";
-import gzipPlugin from 'rollup-plugin-gzip'
 import license from 'rollup-plugin-license';
 
 export default {
@@ -21,13 +20,14 @@ export default {
                 terser({
                     format: {
                         comments: false
-                    }
+                    },
+                    compress: true,
+                    mangle: true
                 })
             ]
         }
     ],
     plugins: [
-        gzipPlugin(),
         typescript({
             target: "es2017",
             declaration: true,
