@@ -102,7 +102,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
         recording = true
       }
     }
-    
+
     if (isLegacy) restore(save())
   })
 
@@ -135,7 +135,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos: Position = {start: 0, end: 0, dir: undefined}
 
     let {anchorNode, anchorOffset, focusNode, focusOffset} = s
-    // selection anchor and focus are expected to be text nodes, so normalize them
+    if (!anchorNode || !focusNode) throw 'error1'
+
+    // Selection anchor and focus are expected to be text nodes,
+    // so normalize them.
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
       const node = document.createTextNode('')
       anchorNode.insertBefore(node, anchorNode.childNodes[anchorOffset])
