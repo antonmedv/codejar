@@ -52,7 +52,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   editor.style.outline = 'none'
   editor.style.overflowWrap = 'break-word'
   editor.style.overflowY = 'auto'
-  editor.style.resize = 'vertical'
   editor.style.whiteSpace = 'pre-wrap'
 
   let isLegacy = false // true if plaintext-only is not supported
