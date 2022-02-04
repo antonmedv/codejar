@@ -409,7 +409,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos = save()
     insert(text)
     highlight(editor)
-    restore({start: pos.start + text.length, end: pos.start + text.length})
+    const startPos = Math.min(pos.start, pos.end)
+    restore({ start: startPos + text.length, end: startPos + text.length })
   }
 
 
