@@ -55,9 +55,7 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = CodeJar(editor, withLineNumbers(highlight), {
-    indentOn: /[(\[{]$/
-  })
+  const jar = CodeJar(editor, withLineNumbers(highlight))
 
   jar.updateCode(localStorage.getItem('code'))
   jar.onUpdate(code => {

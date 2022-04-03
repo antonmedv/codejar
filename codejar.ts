@@ -3,6 +3,7 @@ const globalWindow = window
 type Options = {
   tab: string
   indentOn: RegExp
+  moveToNewLine: RegExp
   spellcheck: boolean
   catchTab: boolean
   preserveIdent: boolean
@@ -27,7 +28,8 @@ export type CodeJar = ReturnType<typeof CodeJar>
 export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: Position) => void, opt: Partial<Options> = {}) {
   const options: Options = {
     tab: '\t',
-    indentOn: /{$/,
+    indentOn: /[({\[]$/,
+    moveToNewLine: /^[)}\]]/,
     spellcheck: false,
     catchTab: true,
     preserveIdent: true,
@@ -261,7 +263,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       let newLinePadding = padding
 
       // If last symbol is "{" ident new line
-      // Allow user defines indent rule
       if (options.indentOn.test(before)) {
         newLinePadding += options.tab
       }
@@ -276,7 +277,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       }
 
       // Place adjacent "}" on next line
-      if (newLinePadding !== padding && after[0] === '}') {
+      if (newLinePadding !== padding && options.moveToNewLine.test(after)) {
         const pos = save()
         insert('\n' + padding)
         restore(pos)
