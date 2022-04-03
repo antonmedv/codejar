@@ -252,6 +252,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return r.toString()
   }
 
+  function reverseRegex(regex: RegExp) {
+	  const r = regex.toString().replace(/\/\$/g, '');
+    const chars = /^\[.+\]$/.test(r) ? r.slice(1, -1).split('') : [r];
+    const open = `([{'"`;
+    const close = `)]}'"`;
+    return new RegExp('^' + chars.map((c) => close[open.indexOf(c)]).filter(Boolean).join(''));
+  }
+
   function handleNewLine(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       const before = beforeCursor()
@@ -275,8 +283,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
         legacyNewLineFix(event)
       }
 
-      // Place adjacent "}" on next line
-      if (newLinePadding !== padding && after[0] === '}') {
+      // Place adjacent "}" (or matching closing char) on next line
+      if (newLinePadding !== padding && reverseRegex(options.indentOn).test(after)) {
         const pos = save()
         insert('\n' + padding)
         restore(pos)
