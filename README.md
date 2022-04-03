@@ -152,7 +152,7 @@ Removes event listeners from editor.
 
 ## Related
 
-* [react-codejar](https://github.com/guilhermelimak/react-codejar) - a react weapper for CodeJar. 
+* [react-codejar](https://github.com/guilhermelimak/react-codejar) - a react wrapper for CodeJar. 
 * [ngx-codejar](https://github.com/julianpoemp/ngx-codejar) - an angular wrapper for CodeJar. 
 
 ## License
