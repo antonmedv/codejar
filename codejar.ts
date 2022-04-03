@@ -410,8 +410,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos = save()
     insert(text)
     highlight(editor)
-    restore({ start: Math.min(pos.start,pos.end) + text.length, 
-                end: Math.min(pos.start,pos.end) + text.length, dir: '<-' });
+    restore({
+      start: Math.min(pos.start, pos.end) + text.length,
+      end: Math.min(pos.start, pos.end) + text.length,
+      dir: '<-',
+    })
   }
 
 
