@@ -138,6 +138,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     let {anchorNode, anchorOffset, focusNode, focusOffset} = s
     if (!anchorNode || !focusNode) throw 'error1'
 
+    // If the anchor and focus are the editor element, return either a full
+    // highlight or a start/end cursor position depending on the selection
+    if (anchorNode === editor && focusNode === editor) {
+      pos.start = (anchorOffset > 0 && editor.textContent) ? editor.textContent.length : 0
+      pos.end = (focusOffset > 0 && editor.textContent) ? editor.textContent.length : 0
+      pos.dir = (focusOffset >= anchorOffset) ? '->' : '<-'
+      return pos
+    }
+
     // Selection anchor and focus are expected to be text nodes,
     // so normalize them.
     if (anchorNode.nodeType === Node.ELEMENT_NODE) {
