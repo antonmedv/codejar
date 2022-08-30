@@ -34,11 +34,11 @@ Create an element and init the CodeJar 🍯:
 ```html
 <div class="editor"></div>
 <script>
-  let jar = CodeJar(document.querySelector('.editor'), Prism.highlightElement)
+  let jar = CodeJar(document.querySelector('.editor'), hljs.highlightElement)
 </script>
 ```
 
-Second argument to `CodeJar` is a highlighting function (in this example [PrismJS](https://prismjs.com)), but any function may be used:
+Second argument to `CodeJar` is a highlighting function (in this example [highlight.js](https://highlightjs.org)), but any function may be used:
 
 ```ts
 const highlight = (editor: HTMLElement) => {
