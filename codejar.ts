@@ -1,4 +1,7 @@
-const globalWindow = window
+import { getDocument, getWindow } from 'ssr-window';
+
+const window = getWindow();
+const document = getDocument();
 
 type Options = {
   tab: string
@@ -35,12 +38,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     preserveIdent: true,
     addClosing: true,
     history: true,
-    window: globalWindow,
+    window,
     ...opt
   }
-
-  const window = options.window
-  const document = window.document
 
   let listeners: [string, any][] = []
   let history: HistoryRecord[] = []

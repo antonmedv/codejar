@@ -1,3 +1,8 @@
+import { getDocument, getWindow } from 'ssr-window';
+
+const window = getWindow();
+const document = getDocument();
+
 type Position = {
   top: string
   left: string
