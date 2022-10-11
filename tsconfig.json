@@ -8,6 +8,10 @@
     ],
     "strict": true,
     "declaration": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "moduleResolution": "node",
+    "types": [
+      "node"
+    ]
   }
 }

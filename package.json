@@ -18,11 +18,14 @@
     "size": "minify codejar.js --sourceType module | gzip-size",
     "release": "release-it"
   },
+  "dependencies": {
+    "ssr-window": "^4.0.2"
+  },
   "devDependencies": {
+    "@types/node": "^18.8.4",
     "babel-minify": "^0.5.1",
     "gzip-size-cli": "^3.0.0",
     "release-it": "^14.5.1",
-    "ssr-window": "^4.0.2",
     "typescript": "^4.2.3"
   },
   "release-it": {
