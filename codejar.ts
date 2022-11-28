@@ -104,7 +104,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       }
     }
 
-    if (isLegacy) restore(save())
+    if (isLegacy && !isCopy(event)) restore(save())
   })
 
   on('keyup', event => {
@@ -455,6 +455,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function isRedo(event: KeyboardEvent) {
     return isCtrl(event) && event.shiftKey && event.code === 'KeyZ'
+  }
+  
+  function isCopy(event) {
+      return isCtrl(event) && event.code === 'KeyC';
   }
 
   function insert(text: string) {
