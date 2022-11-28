@@ -457,7 +457,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return isCtrl(event) && event.shiftKey && event.code === 'KeyZ'
   }
   
-  function isCopy(event) {
+  function isCopy(event: KeyboardEvent) {
       return isCtrl(event) && event.code === 'KeyC';
   }
 
