@@ -19,10 +19,10 @@
     "release": "release-it"
   },
   "devDependencies": {
-    "babel-minify": "^0.5.1",
-    "gzip-size-cli": "^3.0.0",
-    "release-it": "^14.5.1",
-    "typescript": "^4.2.3"
+    "babel-minify": "^0.5.2",
+    "gzip-size-cli": "^5.1.0",
+    "release-it": "^15.6.0",
+    "typescript": "^4.9.5"
   },
   "release-it": {
     "github": {
