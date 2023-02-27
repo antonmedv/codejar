@@ -450,19 +450,17 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function isUndo(event: KeyboardEvent) {
-    return isCtrl(event) && !event.shiftKey && getKeyCode(event) === "Z"
+    return isCtrl(event) && !event.shiftKey && getKeyCode(event) === 'Z'
   }
 
   function isRedo(event: KeyboardEvent) {
-    return isCtrl(event) && event.shiftKey && getKeyCode(event) === "Z";
+    return isCtrl(event) && event.shiftKey && getKeyCode(event) === 'Z'
   }
 
-  function getKeyCode(event: KeyboardEvent): string | undefined{
-    let key = (event.key || event.keyCode || event.which);
-    if (!key) {
-      return undefined;
-    }
-    return ((typeof key === "string") ? key : String.fromCharCode(key)).toUpperCase();
+  function getKeyCode(event: KeyboardEvent): string | undefined {
+    let key = event.key || event.keyCode || event.which
+    if (!key) return undefined
+    return (typeof key === 'string' ? key : String.fromCharCode(key)).toUpperCase()
   }
 
   function insert(text: string) {
