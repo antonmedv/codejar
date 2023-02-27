@@ -457,14 +457,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return isCtrl(event) && event.shiftKey && getKeyCode(event) === 'Z'
   }
 
+  function isCopy(event: KeyboardEvent) {
+    return isCtrl(event) && getKeyCode(event) === 'C'
+  }
+
   function getKeyCode(event: KeyboardEvent): string | undefined {
     let key = event.key || event.keyCode || event.which
     if (!key) return undefined
     return (typeof key === 'string' ? key : String.fromCharCode(key)).toUpperCase()
-  }
-  
-  function isCopy(event: KeyboardEvent) {
-      return isCtrl(event) && event.code === 'KeyC';
   }
 
   function insert(text: string) {
