@@ -311,34 +311,57 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }
 
+  // correctly determines whether a typed character is escaped
+  function isEscape(code: string): boolean {
+      let i = code.length
+      let escaped = false
+      while (--i >= 0 && code[i] === '\\') escaped = !escaped
+      return escaped
+  }
+  
   function handleSelfClosingCharacters(event: KeyboardEvent) {
-    const open = `([{'"`
-    const close = `)]}'"`
-    const codeAfter = afterCursor()
-    const codeBefore = beforeCursor()
-    const escapeCharacter = codeBefore.substr(codeBefore.length - 1) === '\\'
-    const charAfter = codeAfter.substr(0, 1)
-    if (close.includes(event.key) && !escapeCharacter && charAfter === event.key) {
-      // We already have closing char next to cursor.
-      // Move one char to right.
-      const pos = save()
-      preventDefault(event)
-      pos.start = ++pos.end
-      restore(pos)
-    } else if (
-      open.includes(event.key)
-      && !escapeCharacter
-      && (`"'`.includes(event.key) || ['', ' ', '\n'].includes(charAfter))
-    ) {
-      preventDefault(event)
-      const pos = save()
-      const wrapText = pos.start == pos.end ? '' : getSelection().toString()
-      const text = event.key + wrapText + close[open.indexOf(event.key)]
-      insert(text)
-      pos.start++
-      pos.end++
-      restore(pos)
+    const open = `([{`
+    const close = `)]}`
+    const quotes = `'"`
+    const ch = event.key
+    const openBracket = open.includes(ch)
+
+    if (!openBracket && !quotes.includes(ch)) return; 
+
+    if(getSelection().toString()) {
+      // wraps a selection in brackets or quotes, regardless of characters before/after selection
+      if (openBracket) enclose(event, open, close)
+      else enclose(event, quotes, quotes)
+
+    } else {
+      const charAfter = afterCursor().charAt(0)
+      const codeBefore = beforeCursor()
+      const array = ['', ' ', '\t', '\n']
+
+      if (openBracket) {
+        // adds close bracket if there is any close bracket or white-space character after the open bracket or at the end
+        if(!isEscape(codeBefore) && (close.includes(charAfter) || array.includes(charAfter))) {
+          enclose(event, open, close)
+        }
+      }
+      // regex checks whether the last character is non-white-space
+      // a close quote is added only if there is no non-white-space character before/after the typed quote
+      else if (!/\S$/.test(codeBefore) && array.includes(charAfter)) {
+        enclose(event, quotes, quotes)
+      }
     }
+  }
+
+  // if text is selected, wraps the selection in brackets or quotes, otherwise adds closing character
+  function enclose(event: KeyboardEvent, open: string, close: string) {
+    preventDefault(event)
+    const pos = save()
+    const wrapText = pos.start == pos.end ? '' : getSelection().toString()
+    const text = event.key + wrapText + close[open.indexOf(event.key)]
+    insert(text)
+    pos.start++
+    pos.end++
+    restore(pos)
   }
 
   function handleTabCharacters(event: KeyboardEvent) {
@@ -415,7 +438,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const text = ((event as any).originalEvent || event)
       .clipboardData
       .getData('text/plain')
-      .replace(/\r/g, '')
+      // this regex handle both '\r' and '\r\n' line endings
+      .replace(/\r\n?/g, '\n')
     const pos = save()
     insert(text)
     highlight(editor)
