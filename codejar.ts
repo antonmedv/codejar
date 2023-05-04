@@ -131,6 +131,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (callback) callback(toString())
   })
 
+  on('cut', event => {
+    recordHistory()
+    handleCut(event)
+    recordHistory()
+    if (callback) callback(toString())
+  })
+
   function save(): Position {
     const s = getSelection()
     const pos: Position = {start: 0, end: 0, dir: undefined}
@@ -426,6 +433,20 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     })
   }
 
+  function handleCut(event: ClipboardEvent) {
+    const pos = save()
+    const selection = getSelection()
+    const originalEvent = (event as any).originalEvent ?? event
+    originalEvent.clipboardData.setData("text/plain", selection.toString())
+    document.execCommand('delete')
+    highlight(editor)
+    restore({
+      start: pos.start,
+      end: pos.start,
+      dir: '->',
+    })
+    preventDefault(event)
+  }
 
   function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
     const queue: Node[] = []
