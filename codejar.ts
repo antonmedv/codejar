@@ -434,8 +434,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function handleCut(event: ClipboardEvent) {
-    preventDefault(event)
     const pos = save()
+    const selection = getSelection()
+    const originalEvent = (event as any).originalEvent ?? event
+    originalEvent.clipboardData.setData("text/plain", selection.toString())
     document.execCommand('delete')
     highlight(editor)
     restore({
@@ -443,6 +445,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       end: pos.start,
       dir: '->',
     })
+    preventDefault(event)
   }
 
   function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
