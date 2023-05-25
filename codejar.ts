@@ -539,6 +539,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     updateCode(code: string) {
       editor.textContent = code
       highlight(editor)
+      if (callback) callback(code)
     },
     onUpdate(cb: (code: string) => void) {
       callback = cb
