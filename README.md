@@ -1,3 +1,5 @@
+<a href="https://webpod.dev/?from=codejar"><img src="https://webpod.dev/img/banner.png" alt="Webpod - deploy JavaScript apps" width="190" align="right"></a>
+
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar.svg" width="72"></a></p>
 <h3 align="center">CodeJar – an embeddable code editor for the browser</h3>
 <p align="center"><a href="https://medv.io/codejar/"><img src="https://medv.io/assets/codejar/screenshot.png" width="709"></a></p>
