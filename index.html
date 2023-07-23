@@ -55,7 +55,7 @@
     hljs.highlightBlock(editor)
   }
 
-  const jar = CodeJar(editor, withLineNumbers(highlight))
+  const jar = CodeJar(editor, withLineNumbers(highlight), {multilineIndentation: true, tab: '  '})
 
   jar.updateCode(localStorage.getItem('code'))
   jar.onUpdate(code => {

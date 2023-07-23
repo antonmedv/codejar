@@ -6,6 +6,15 @@ type Options = {
   moveToNewLine: RegExp
   spellcheck: boolean
   catchTab: boolean
+  /**
+   * Enabling multilineIndentation allows users to select blocks of
+   * text and indent (or dedent) them with the tab (or shift-tab) key.
+   * This setting is currently disabled by default.
+   * 
+   * Note that this feature does not currently work with Firefox, and
+   * will be disabled automatically if the browser does not support it.
+   */
+  multilineIndentation: boolean
   preserveIdent: boolean
   addClosing: boolean
   history: boolean
@@ -32,6 +41,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     moveToNewLine: /^[)}\]]/,
     spellcheck: false,
     catchTab: true,
+    multilineIndentation: false,
     preserveIdent: true,
     addClosing: true,
     history: true,
@@ -65,7 +75,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   highlight(editor)
   if (editor.contentEditable !== 'plaintext-only') isLegacy = true
-  if (isLegacy) editor.setAttribute('contenteditable', 'true')
+  if (isLegacy) {
+    editor.setAttribute('contenteditable', 'true')
+    // Disable multiline indentation if plaintext-only is not supported.
+    options.multilineIndentation = false
+  }
 
   const debounceHighlight = debounce(() => {
     const pos = save()
@@ -353,9 +367,39 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }
 
+  /**
+   * Expands (or shrinks) a range by a given number of characters by adding
+   * (or removing) a given number of characters from the tail of the range.
+   * @param range The range to expand.
+   * @param additionalCharacters The number of characters to expand by.
+   * @returns A new range representing the original range expanded by the given
+   *    number of characters (in the tail direction.)
+   * @description Passing a negative value for the `additionalCharacters`
+   *    parameter will shrink the range instead of expanding it. This is by
+   *    design.
+   */
+  function inflateRange(range: Position, additionalCharacters: number) {
+    if (range.dir === '->') {
+      return { start: range.start, end: range.end + additionalCharacters, dir: range.dir }
+    } else {
+      return { start: range.start + additionalCharacters, end: range.end, dir: range.dir }
+    }
+  }
+
   function handleTabCharacters(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      preventDefault(event)
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    preventDefault(event);
+  
+    // For standard tab behavior, simply allow the tab to be inserted (or
+    // removed.) This behavior could probably be combined with the multi-line
+    // behavior below but this is being left as-is for now to de-risk the
+    // multiline behavior change and maintain the previous behavior of the
+    // library by default.
+    const selection = getSelection();
+    if (!options.multilineIndentation || selection.getRangeAt(0).collapsed) {
       if (event.shiftKey) {
         const before = beforeCursor()
         let [padding, start] = findPadding(before)
@@ -372,7 +416,52 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       } else {
         insert(options.tab)
       }
+      return;
     }
+
+    // For multi-line tab behavior, we indent or dedent the selected lines.
+    // Since this operation effects the entire line, we extend the selection
+    // to cover the entire line before proceeding.
+    // Firefox's support for calling .modify() on a selection is limited.
+    // It will only modify the user's original selection, and will not
+    // modify any selection that was created programmatically. So we have
+    // disabled this feature for Firefox until we can find a workaround.
+    selection.modify('extend', 'backward', 'lineboundary')
+    selection.modify('extend', 'forward', 'lineboundary')
+    const selectedText = selection.getRangeAt(0).toString()
+    const selectedLines = selectedText.split('\n')
+    const lineCount = selectedLines.length
+
+    const initialSelection = save()
+
+    let insertedCharacters = 0
+    // If the shift key is being held, it's a dedent request.
+    if (event.shiftKey) {
+      for (let i = 0; i < lineCount; i++) {
+        // We can only dedent lines that begin with some sort of whitespace.
+        // So we check for that first, and never consume more characters than
+        // there is whitespace.
+        const match = selectedLines[i].match(/^\s+/)
+        if (match !== null) {
+          const leadingSpace = match[0]
+          const originalLength = selectedLines[i].length
+          if (leadingSpace.length >= options.tab.length) {
+            selectedLines[i] = selectedLines[i].slice(options.tab.length)
+          } else if (leadingSpace.length > 0) {
+            selectedLines[i] = selectedLines[i].slice(leadingSpace.length)
+          }
+          insertedCharacters = insertedCharacters + (selectedLines[i].length - originalLength)
+        }
+      }
+    } else {
+      insertedCharacters = lineCount * options.tab.length
+      for (let i = 0; i < lineCount; i++) {
+        selectedLines[i] = options.tab + selectedLines[i]
+      }
+    }
+
+    insert(selectedLines.join('\n'))
+    restore(inflateRange(initialSelection, insertedCharacters))
   }
 
   function handleUndoRedo(event: KeyboardEvent) {
