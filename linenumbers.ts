@@ -4,6 +4,7 @@ type Options = {
   width: string
   backgroundColor: string
   color: string
+  side: "left" | "right"
 }
 
 export function withLineNumbers(
@@ -14,6 +15,7 @@ export function withLineNumbers(
     class: "codejar-linenumbers",
     wrapClass: "codejar-wrap",
     width: "35px",
+    side: "left",
     backgroundColor: "rgba(128, 128, 128, 0.15)",
     color: "",
     ...options
@@ -49,12 +51,17 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
 
   const gutter = document.createElement("div")
   gutter.className = opts.class
+  gutter.dir = opts.side == "left" ? "ltr" : "rtl"
   wrap.appendChild(gutter)
 
   // Add own styles
   gutter.style.position = "absolute"
   gutter.style.top = "0px"
-  gutter.style.left = "0px"
+  if (opts.side == "left") {
+    gutter.style.left = "0px"
+  } else {
+    gutter.style.right = "0px"
+  }
   gutter.style.bottom = "0px"
   gutter.style.width = opts.width
   gutter.style.overflow = "hidden"
@@ -67,9 +74,15 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   gutter.style.fontSize = css.fontSize
   gutter.style.lineHeight = css.lineHeight
   gutter.style.paddingTop = css.paddingTop
-  gutter.style.paddingLeft = css.paddingLeft
-  gutter.style.borderTopLeftRadius = css.borderTopLeftRadius
-  gutter.style.borderBottomLeftRadius = css.borderBottomLeftRadius
+  if (opts.side == "left") {
+    gutter.style.paddingLeft = css.paddingLeft
+    gutter.style.borderTopLeftRadius = css.borderTopLeftRadius
+    gutter.style.borderBottomLeftRadius = css.borderBottomLeftRadius
+  } else {
+    gutter.style.paddingRight = css.paddingRight
+    gutter.style.borderTopRightRadius = css.borderTopRightRadius
+    gutter.style.borderBottomRightRadius = css.borderBottomRightRadius
+  }
 
   // Add line numbers
   const lineNumbers = document.createElement("div");
@@ -78,8 +91,12 @@ function init(editor: HTMLElement, opts: Options): HTMLElement {
   gutter.appendChild(lineNumbers)
 
   // Tweak editor styles
-  editor.style.paddingLeft = `calc(${opts.width} + ${gutter.style.paddingLeft})`
   editor.style.whiteSpace = "pre"
+  if (opts.side == "left") {
+    editor.style.paddingLeft = `calc(${opts.width} + ${gutter.style.paddingLeft})`
+  } else {
+    editor.style.paddingRight = `calc(${opts.width} + ${gutter.style.paddingRight})`
+  }
 
   // Swap editor with a wrap
   editor.parentNode!.insertBefore(wrap, editor)

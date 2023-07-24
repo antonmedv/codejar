@@ -35,18 +35,20 @@
             line-height: 20px;
             padding: 10px;
             tab-size: 4;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 <main>
-    <div class="editor language-js"></div>
+    <div id="editor" class="editor language-js"></div>
+    <div id="editor-rtl" class="editor language-js" dir="rtl"></div>
 </main>
 <script type="module">
   import {CodeJar} from './codejar.js'
   import {withLineNumbers} from './linenumbers.js'
 
-  const editor = document.querySelector('.editor')
+  const editor = document.querySelector('#editor')
 
   const highlight = editor => {
     // highlight.js does not trim old tags,
@@ -61,6 +63,25 @@
   jar.onUpdate(code => {
     localStorage.setItem('code', code)
   })
+
+  // Setup the RTL Demo:
+  const editorRtl = document.querySelector('#editor-rtl')
+  const jarRtl = CodeJar(editorRtl, withLineNumbers(highlight, { side: "right" }))
+
+  const rtlDemoCode = localStorage.getItem('code-rtl') || `لكن لا بد أن أوضح لك أن كل هذه الأفكار المغلوطة حول استنكار
+النشوة وتمجيد الألم نشأت بالفعل، وسأعرض لك التفاصيل لتكتشف حقيقة وأساس تلك
+السعادة البشرية، فلا أحد يرفض أو يكره
+أو يتجنب الشعور بالسعادة، ولكن بفضل هؤلاء الأشخاص الذين
+لا يدركون بأن السعادة لا بد أن نستشعرها بصورة أكثر
+عقلانية ومنطقية فيعرضهم هذا لمواجهة الظروف الأليمة، وأكرر
+بأنه لا يوجد من يرغب في الحب ونيل المنال
+ويتلذذ بالآلام، الألم هو الألم ولكن نتيجة لظروف ما
+قد تكمن السعاده فيما نتحمله من كد وأسي.`
+  jarRtl.updateCode(rtlDemoCode)
+  jarRtl.onUpdate(code => {
+    localStorage.setItem('code-rtl', code)
+  })
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.18.1/highlight.min.js"></script>
 </body>
