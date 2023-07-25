@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CodeJar 🍯</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #F6F8F8;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .editor {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+      font-family: "Source Code Pro", monospace;
+      font-size: 14px;
+      font-weight: 400;
+      min-height: 240px;
+      letter-spacing: normal;
+      line-height: 20px;
+      padding: 10px;
+      tab-size: 4;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <div class="editor" data-manual data-gramm="false"></div>
+</main>
+<script type="module">
+  import {CodeJar} from './dist/codejar.js'
+  const editor = document.querySelector('.editor')
+
+  const highlight = editor => {
+    editor.innerHTML = Prism.highlight(editor.textContent, Prism.languages.javascript, 'javascript')
+  }
+
+  const jar = CodeJar(editor, highlight, {
+    tab: '  ',
+  })
+
+  jar.updateCode(localStorage.getItem('code'))
+  jar.onUpdate(code => {
+    localStorage.setItem('code', code)
+  })
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+</body>
+</html>

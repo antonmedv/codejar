@@ -321,22 +321,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   function handleSelfClosingCharacters(event: KeyboardEvent) {
     const open = `([{'"`
     const close = `)]}'"`
-    const codeAfter = afterCursor()
-    const codeBefore = beforeCursor()
-    const escapeCharacter = codeBefore.substr(codeBefore.length - 1) === '\\'
-    const charAfter = codeAfter.substr(0, 1)
-    if (close.includes(event.key) && !escapeCharacter && charAfter === event.key) {
-      // We already have closing char next to cursor.
-      // Move one char to right.
-      const pos = save()
-      preventDefault(event)
-      pos.start = ++pos.end
-      restore(pos)
-    } else if (
-      open.includes(event.key)
-      && !escapeCharacter
-      && (`"'`.includes(event.key) || ['', ' ', '\n'].includes(charAfter))
-    ) {
+    if (open.includes(event.key)) {
       preventDefault(event)
       const pos = save()
       const wrapText = pos.start == pos.end ? '' : getSelection().toString()
@@ -422,7 +407,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const text = ((event as any).originalEvent || event)
       .clipboardData
       .getData('text/plain')
-      .replace(/\r/g, '')
+      .replace(/\r\n?/g, '\n')
     const pos = save()
     insert(text)
     highlight(editor)
@@ -450,18 +435,12 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
     const queue: Node[] = []
-
     if (editor.firstChild) queue.push(editor.firstChild)
-
     let el = queue.pop()
-
     while (el) {
-      if (visitor(el) === 'stop')
-        break
-
+      if (visitor(el) === 'stop') break
       if (el.nextSibling) queue.push(el.nextSibling)
       if (el.firstChild) queue.push(el.firstChild)
-
       el = queue.pop()
     }
   }

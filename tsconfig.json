@@ -1,13 +1,18 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "esnext",
+    "target": "ES2021",
     "lib": [
-      "es2020",
-      "dom"
+      "ES2021",
+      "DOM"
     ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "declaration": true,
-    "noUnusedLocals": true
-  }
+    "noUnusedLocals": true,
+    "outDir": "./dist",
+  },
+  "include": [
+    "**/*.ts"
+  ],
 }
