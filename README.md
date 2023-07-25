@@ -7,7 +7,8 @@
 
 ## Features
 
-* Lightweight (**3 kB** only)
+* Lightweight (**2.45 kB** only)
+* No dependencies
 * Preserves indentation on a new line
 * Adds closing brackets, quotes
 * Indents line with the **Tab** key
