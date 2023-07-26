@@ -9,6 +9,16 @@
     ".": "./dist/codejar.js",
     "./cursor": "./dist/cursor.js"
   },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/codejar.d.ts"
+      ],
+      "cursor": [
+        "./dist/cursor.d.ts"
+      ]
+    }
+  },
   "files": [
     "dist"
   ],
