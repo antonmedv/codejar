@@ -422,13 +422,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos = save()
     const selection = getSelection()
     const originalEvent = (event as any).originalEvent ?? event
-    originalEvent.clipboardData.setData("text/plain", selection.toString())
+    originalEvent.clipboardData.setData('text/plain', selection.toString())
     document.execCommand('delete')
     highlight(editor)
     restore({
-      start: pos.start,
-      end: pos.start,
-      dir: '->',
+      start: Math.min(pos.start, pos.end),
+      end: Math.min(pos.start, pos.end),
+      dir: '<-',
     })
     preventDefault(event)
   }
