@@ -36,7 +36,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     addClosing: true,
     history: true,
     window: globalWindow,
-    ...opt
+    ...opt,
   }
 
   const window = options.window
@@ -46,7 +46,12 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   let history: HistoryRecord[] = []
   let at = -1
   let focus = false
-  let callback: (code: string) => void | undefined
+  const cb = {
+    update(code: string): void | undefined {
+    },
+    paste(data: { text: string }): void {
+    },
+  }
   let prev: string // code content prior keydown event
 
   editor.setAttribute('contenteditable', 'plaintext-only')
@@ -113,7 +118,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     if (prev !== toString()) debounceHighlight()
     debounceRecordHistory(event)
-    if (callback) callback(toString())
+    cb.update(toString())
   })
 
   on('focus', _event => {
@@ -128,14 +133,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     recordHistory()
     handlePaste(event)
     recordHistory()
-    if (callback) callback(toString())
+    cb.update(toString())
   })
 
   on('cut', event => {
     recordHistory()
     handleCut(event)
     recordHistory()
-    if (callback) callback(toString())
+    cb.update(toString())
   })
 
   function save(): Position {
@@ -353,7 +358,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       preventDefault(event)
       if (event.shiftKey) {
         const before = beforeCursor()
-        let [padding, start,] = findPadding(before)
+        let [padding, start] = findPadding(before)
         if (padding.length > 0) {
           const pos = save()
           // Remove full length tab or just remaining padding
@@ -419,16 +424,17 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function handlePaste(event: ClipboardEvent) {
     preventDefault(event)
-    const text = ((event as any).originalEvent || event)
-      .clipboardData
-      .getData('text/plain')
-      .replace(/\r/g, '')
+    const originalEvent = (event as any).originalEvent ?? event
+    const data = {
+      text: originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n'),
+    }
+    cb.paste(data)
     const pos = save()
-    insert(text)
+    insert(data.text)
     highlight(editor)
     restore({
-      start: Math.min(pos.start, pos.end) + text.length,
-      end: Math.min(pos.start, pos.end) + text.length,
+      start: Math.min(pos.start, pos.end) + data.text.length,
+      end: Math.min(pos.start, pos.end) + data.text.length,
       dir: '<-',
     })
   }
@@ -437,13 +443,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos = save()
     const selection = getSelection()
     const originalEvent = (event as any).originalEvent ?? event
-    originalEvent.clipboardData.setData("text/plain", selection.toString())
+    originalEvent.clipboardData.setData('text/plain', selection.toString())
     document.execCommand('delete')
     highlight(editor)
     restore({
-      start: pos.start,
-      end: pos.start,
-      dir: '->',
+      start: Math.min(pos.start, pos.end),
+      end: Math.min(pos.start, pos.end),
+      dir: '<-',
     })
     preventDefault(event)
   }
@@ -539,10 +545,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     updateCode(code: string) {
       editor.textContent = code
       highlight(editor)
-      if (callback) callback(code)
+      cb.update(code)
     },
-    onUpdate(cb: (code: string) => void) {
-      callback = cb
+    onUpdate(callback: (code: string) => void) {
+      cb.update = callback
+    },
+    onPaste(callback: (data: { text: string }) => void) {
+      cb.paste = callback
     },
     toString,
     save,

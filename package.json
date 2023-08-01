@@ -1,28 +1,38 @@
 {
   "name": "codejar",
-  "version": "3.7.0",
   "description": "An embeddable code editor for the browser",
-  "license": "MIT",
-  "repository": "antonmedv/codejar",
-  "author": "Anton Medvedev <anton@medv.io>",
-  "homepage": "https://medv.io/codejar/",
-  "main": "codejar.js",
-  "types": "codejar.d.ts",
+  "version": "4.1.1",
+  "type": "module",
+  "main": "./dist/codejar.js",
+  "types": "./dist/codejar.d.ts",
+  "exports": {
+    ".": "./dist/codejar.js",
+    "./cursor": "./dist/cursor.js"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/codejar.d.ts"
+      ],
+      "cursor": [
+        "./dist/cursor.d.ts"
+      ]
+    }
+  },
   "files": [
-    "*.ts",
-    "*.js"
+    "dist"
   ],
   "scripts": {
     "start": "tsc -w",
     "build": "tsc",
-    "size": "minify codejar.js --sourceType module | gzip-size",
+    "size": "minify ./dist/codejar.js --sourceType module | gzip-size",
     "release": "release-it"
   },
   "devDependencies": {
     "babel-minify": "^0.5.2",
     "gzip-size-cli": "^5.1.0",
-    "release-it": "^15.6.0",
-    "typescript": "^4.9.5"
+    "release-it": "^16.1.3",
+    "typescript": "^5.1.6"
   },
   "release-it": {
     "github": {
@@ -31,5 +41,9 @@
     "hooks": {
       "after:bump": "npm run build"
     }
-  }
+  },
+  "license": "MIT",
+  "repository": "antonmedv/codejar",
+  "author": "Anton Medvedev <anton@medv.io>",
+  "homepage": "https://medv.io/codejar/"
 }
