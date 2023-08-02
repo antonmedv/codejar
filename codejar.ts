@@ -254,7 +254,37 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       [startNode, startOffset, endNode, endOffset] = [endNode, endOffset, startNode, startOffset]
     }
 
+    {
+      // If nodes not editable, create a text node.
+      const startEl = uneditable(startNode)
+      if (startEl) {
+        const node = document.createTextNode('')
+        startEl.parentNode?.insertBefore(node, startEl)
+        startNode = node
+        startOffset = 0
+      }
+      const endEl = uneditable(endNode)
+      if (endEl) {
+        const node = document.createTextNode('')
+        endEl.parentNode?.insertBefore(node, endEl)
+        endNode = node
+        endOffset = 0
+      }
+    }
+
     s.setBaseAndExtent(startNode, startOffset, endNode, endOffset)
+  }
+
+  function uneditable(node: Node): Element | undefined {
+    while (node && node !== editor) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as Element
+        if (el.getAttribute('contenteditable') == 'false') {
+          return el
+        }
+      }
+      node = node.parentNode!
+    }
   }
 
   function beforeCursor() {
