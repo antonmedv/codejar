@@ -42,16 +42,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   const window = options.window
   const document = window.document
 
-  let listeners: [string, any][] = []
-  let history: HistoryRecord[] = []
+  const listeners: [string, any][] = []
+  const history: HistoryRecord[] = []
   let at = -1
   let focus = false
-  const cb = {
-    update(code: string): void | undefined {
-    },
-    paste(data: { text: string }): void {
-    },
-  }
+  let onUpdate: (code: string) => void | undefined = () => void 0
   let prev: string // code content prior keydown event
 
   editor.setAttribute('contenteditable', 'plaintext-only')
@@ -61,15 +56,17 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   editor.style.overflowY = 'auto'
   editor.style.whiteSpace = 'pre-wrap'
 
-  let isLegacy = false // true if plaintext-only is not supported
+  const doHighlight = (editor: HTMLElement, pos?: Position) => {
+    highlight(editor, pos)
+  }
 
-  highlight(editor)
+  let isLegacy = false // true if plaintext-only is not supported
   if (editor.contentEditable !== 'plaintext-only') isLegacy = true
   if (isLegacy) editor.setAttribute('contenteditable', 'true')
 
   const debounceHighlight = debounce(() => {
     const pos = save()
-    highlight(editor, pos)
+    doHighlight(editor, pos)
     restore(pos)
   }, 30)
 
@@ -108,7 +105,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
         recording = true
       }
     }
-
     if (isLegacy && !isCopy(event)) restore(save())
   })
 
@@ -118,7 +114,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     if (prev !== toString()) debounceHighlight()
     debounceRecordHistory(event)
-    cb.update(toString())
+    onUpdate(toString())
   })
 
   on('focus', _event => {
@@ -133,14 +129,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     recordHistory()
     handlePaste(event)
     recordHistory()
-    cb.update(toString())
+    onUpdate(toString())
   })
 
   on('cut', event => {
     recordHistory()
     handleCut(event)
     recordHistory()
-    cb.update(toString())
+    onUpdate(toString())
   })
 
   function save(): Position {
@@ -204,9 +200,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       }
     })
 
-    // collapse empty text nodes
-    editor.normalize()
-
+    editor.normalize() // collapse empty text nodes
     return pos
   }
 
@@ -273,6 +267,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
 
     s.setBaseAndExtent(startNode, startOffset, endNode, endOffset)
+    editor.normalize() // collapse empty text nodes
   }
 
   function uneditable(node: Node): Element | undefined {
@@ -438,18 +433,16 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function handlePaste(event: ClipboardEvent) {
+    if (event.defaultPrevented) return
     preventDefault(event)
     const originalEvent = (event as any).originalEvent ?? event
-    const data = {
-      text: originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n'),
-    }
-    cb.paste(data)
+    const text = originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
     const pos = save()
-    insert(data.text)
-    highlight(editor)
+    insert(text)
+    doHighlight(editor)
     restore({
-      start: Math.min(pos.start, pos.end) + data.text.length,
-      end: Math.min(pos.start, pos.end) + data.text.length,
+      start: Math.min(pos.start, pos.end) + text.length,
+      end: Math.min(pos.start, pos.end) + text.length,
       dir: '<-',
     })
   }
@@ -460,7 +453,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const originalEvent = (event as any).originalEvent ?? event
     originalEvent.clipboardData.setData('text/plain', selection.toString())
     document.execCommand('delete')
-    highlight(editor)
+    doHighlight(editor)
     restore({
       start: Math.min(pos.start, pos.end),
       end: Math.min(pos.start, pos.end),
@@ -553,14 +546,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     },
     updateCode(code: string) {
       editor.textContent = code
-      highlight(editor)
-      cb.update(code)
+      doHighlight(editor)
+      onUpdate(code)
     },
     onUpdate(callback: (code: string) => void) {
-      cb.update = callback
-    },
-    onPaste(callback: (data: { text: string }) => void) {
-      cb.paste = callback
+      onUpdate = callback
     },
     toString,
     save,
