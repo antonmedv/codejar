@@ -131,6 +131,10 @@ Removes event listeners from editor.
 * [react-codejar](https://github.com/guilhermelimak/react-codejar) - a React wrapper for CodeJar. 
 * [ngx-codejar](https://github.com/julianpoemp/ngx-codejar) - an Angular wrapper for CodeJar. 
 
+## Become a sponsor
+
+Every line of code in my repositories 📖 signifies my unwavering commitment to open source 💡. Your support 🤝 ensures these projects keep thriving, innovating, and benefiting all 💼. If my work has ever resonated 🎵 or helped you, kindly consider showing love ❤️ by sponsoring. [**🚀 Sponsor Me Today! 🚀**](https://github.com/sponsors/antonmedv)
+
 ## License
 
 [MIT](LICENSE)
