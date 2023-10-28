@@ -130,6 +130,7 @@ Removes event listeners from editor.
 
 * [react-codejar](https://github.com/guilhermelimak/react-codejar) - a React wrapper for CodeJar. 
 * [ngx-codejar](https://github.com/julianpoemp/ngx-codejar) - an Angular wrapper for CodeJar. 
+* [codejar-linenumbers](https://github.com/julianpoemp/codejar-linenumbers) - an JS library for line numbers.
 
 ## Become a sponsor
 
