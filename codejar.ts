@@ -544,10 +544,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     updateOptions(newOptions: Partial<Options>) {
       Object.assign(options, newOptions)
     },
-    updateCode(code: string) {
+    updateCode(code: string, callOnUpdate: boolean = true) {
       editor.textContent = code
       doHighlight(editor)
-      onUpdate(code)
+      callOnUpdate && onUpdate(code)
     },
     onUpdate(callback: (code: string) => void) {
       onUpdate = callback
