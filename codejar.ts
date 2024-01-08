@@ -534,10 +534,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function getSelection() {
-    if (editor.parentNode?.nodeType == Node.DOCUMENT_FRAGMENT_NODE) {
-      return (editor.parentNode as Document).getSelection()!
-    }
-    return window.getSelection()!
+    // @ts-ignore
+    return editor.getRootNode().getSelection() as Selection
   }
 
   return {
