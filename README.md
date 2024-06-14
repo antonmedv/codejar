@@ -132,10 +132,6 @@ Removes event listeners from editor.
 * [ngx-codejar](https://github.com/julianpoemp/ngx-codejar) - an Angular wrapper for CodeJar. 
 * [codejar-linenumbers](https://github.com/julianpoemp/codejar-linenumbers) - an JS library for line numbers.
 
-## Become a sponsor
-
-Every line of code in my repositories 📖 signifies my unwavering commitment to open source 💡. Your support 🤝 ensures these projects keep thriving, innovating, and benefiting all 💼. If my work has ever resonated 🎵 or helped you, kindly consider showing love ❤️ by sponsoring. [**🚀 Sponsor Me Today! 🚀**](https://github.com/sponsors/antonmedv)
-
 ## License
 
 [MIT](LICENSE)
