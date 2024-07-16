@@ -1,15 +1,31 @@
 const globalWindow = window
 
+type JarFunctions = {
+    updateCode: (code: string) => void;
+    save: () => Position;
+    restore: (pos: Position) => void;
+};
+
+type Keybinding = {
+    key: string;
+    ctrl?: boolean;
+    meta?: boolean;
+    shift?: boolean;
+    alt?: boolean;
+    action: (editor: HTMLElement, jar: JarFunctions) => void;
+};
+
 type Options = {
-  tab: string
-  indentOn: RegExp
-  moveToNewLine: RegExp
-  spellcheck: boolean
-  catchTab: boolean
-  preserveIdent: boolean
-  addClosing: boolean
-  history: boolean
-  window: typeof window
+	tab: string;
+	indentOn: RegExp;
+	moveToNewLine: RegExp;
+	spellcheck: boolean;
+	catchTab: boolean;
+	preserveIdent: boolean;
+	addClosing: boolean;
+	history: boolean;
+	window: typeof window;
+	keybindings?: Keybinding[];
 }
 
 type HistoryRecord = {
@@ -85,6 +101,23 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }, 300)
 
+  const handleKeybindings = (event: KeyboardEvent) => {
+    if (options.keybindings) {
+      for (const binding of options.keybindings) {
+        if (
+          event.key.toLowerCase() === binding.key.toLowerCase() &&
+          !!binding.ctrl === event.ctrlKey &&
+          !!binding.meta === event.metaKey &&
+          !!binding.shift === event.shiftKey &&
+          !!binding.alt === event.altKey
+        ) {
+          event.preventDefault();
+          binding.action(editor, { save, restore, updateCode });
+        }
+      }
+    }
+  };
+  
   const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
     listeners.push([type, fn])
     editor.addEventListener(type, fn)
@@ -94,6 +127,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (event.defaultPrevented) return
 
     prev = toString()
+		handleKeybindings(event)
     if (options.preserveIdent) handleNewLine(event)
     else legacyNewLineFix(event)
     if (options.catchTab) handleTabCharacters(event)
@@ -538,15 +572,17 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return editor.getRootNode().getSelection() as Selection
   }
 
+  function updateCode(code: string, callOnUpdate: boolean = true) {
+    editor.textContent = code
+    doHighlight(editor)
+    callOnUpdate && onUpdate(code)
+  }
+
   return {
     updateOptions(newOptions: Partial<Options>) {
       Object.assign(options, newOptions)
     },
-    updateCode(code: string, callOnUpdate: boolean = true) {
-      editor.textContent = code
-      doHighlight(editor)
-      callOnUpdate && onUpdate(code)
-    },
+    updateCode,
     onUpdate(callback: (code: string) => void) {
       onUpdate = callback
     },
