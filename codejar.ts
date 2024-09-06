@@ -229,28 +229,20 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }
 
-  function beforeCursor() {
-    const s = getSelection()
-    const r0 = s.getRangeAt(0)
-    const r = document.createRange()
-    r.selectNodeContents(editor)
-    r.setEnd(r0.startContainer, r0.startOffset)
-    return r.toString()
-  }
-
-  function afterCursor() {
-    const s = getSelection()
-    const r0 = s.getRangeAt(0)
-    const r = document.createRange()
-    r.selectNodeContents(editor)
-    r.setStart(r0.endContainer, r0.endOffset)
-    return r.toString()
+  function aroundCursor() {
+    let {start, end, dir} = save()
+    if (dir === '<-') {
+      [start, end] = [end, start]
+    }
+    const text = toString()
+    const before = text.slice(0, start)
+    const after = text.slice(end)
+    return {before, after}
   }
 
   function handleNewLine(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      const before = beforeCursor()
-      const after = afterCursor()
+      const {before, after} = aroundCursor()
 
       const [padding] = findPadding(before)
       let newLinePadding = padding
@@ -284,7 +276,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (isLegacy && event.key === 'Enter') {
       event.preventDefault()
       event.stopPropagation()
-      if (afterCursor() === '') {
+      if (aroundCursor().after === '') {
         insert('\n ')
         const pos = save()
         pos.start = --pos.end
@@ -314,7 +306,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (event.key === 'Tab') {
       event.preventDefault()
       if (event.shiftKey) {
-        const before = beforeCursor()
+        const {before} = aroundCursor()
         const [padding, start] = findPadding(before)
         if (padding.length > 0) {
           const pos = save()
@@ -405,13 +397,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return event.key.toUpperCase()
   }
 
-  function insert(inserted: string) {
-    let {start, end} = save()
-    const text = toString()
-    const before = text.slice(0, start)
-    const after = text.slice(end)
-    editor.textContent = before + inserted + after
-    start += inserted.length
+  function insert(text: string) {
+    let {start} = save()
+    const {before, after} = aroundCursor()
+    editor.textContent = before + text + after
+    start += text.length
     restore({start, end: start})
   }
 
