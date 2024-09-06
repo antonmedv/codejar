@@ -305,7 +305,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       const before = beforeCursor()
       const after = afterCursor()
 
-      let [padding] = findPadding(before)
+      const [padding] = findPadding(before)
       let newLinePadding = padding
 
       // If last symbol is "{" ident new line
@@ -368,7 +368,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       preventDefault(event)
       if (event.shiftKey) {
         const before = beforeCursor()
-        let [padding, start] = findPadding(before)
+        const [padding, start] = findPadding(before)
         if (padding.length > 0) {
           const pos = save()
           // Remove full length tab or just remaining padding
@@ -491,7 +491,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function getKeyCode(event: KeyboardEvent): string | undefined {
-    let key = event.key || event.keyCode || event.which
+    const key = event.key || event.keyCode || event.which
     if (!key) return undefined
     return (typeof key === 'string' ? key : String.fromCharCode(key)).toUpperCase()
   }
@@ -555,7 +555,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     restore,
     recordHistory,
     destroy() {
-      for (let [type, fn] of listeners) {
+      for (const [type, fn] of listeners) {
         editor.removeEventListener(type, fn)
       }
     },
