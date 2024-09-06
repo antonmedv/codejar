@@ -365,7 +365,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
           // Remove full length tab or just remaining padding
           const len = Math.min(options.tab.length, padding.length)
           restore({start, end: start + len})
-          document.execCommand('delete')
+          insert('') // deletes the selection
           pos.start -= len
           pos.end -= len
           restore(pos)
@@ -441,7 +441,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const pos = save()
     const selection = getSelection()
     event.clipboardData?.setData('text/plain', selection.toString())
-    document.execCommand('delete')
+    insert('') // deletes the selection
     highlight(editor)
     restore({
       start: Math.min(pos.start, pos.end),
@@ -483,14 +483,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     return event.key.toUpperCase()
   }
 
-  function insert(text: string) {
-    text = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    document.execCommand('insertHTML', false, text)
+  function insert(inserted: string) {
+    let {start, end} = save()
+    const text = toString()
+    const before = text.slice(0, start)
+    const after = text.slice(end)
+    editor.textContent = before + inserted + after
+    start += inserted.length
+    restore({start, end: start})
   }
 
   function debounce<Args extends unknown[]>(cb: (...args: Args) => void, wait: number) {
