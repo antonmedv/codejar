@@ -42,7 +42,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   const window = options.window
   const document = window.document
 
-  const listeners: [string, any][] = []
+  const listeners: [keyof HTMLElementEventMap, (event: Event) => void][] = []
   const history: HistoryRecord[] = []
   let at = -1
   let focus = false
@@ -86,7 +86,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }, 300)
 
   const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
-    listeners.push([type, fn])
+    listeners.push([type, fn as (event: Event) => void])
     editor.addEventListener(type, fn)
   }
 
@@ -435,8 +435,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   function handlePaste(event: ClipboardEvent) {
     if (event.defaultPrevented) return
     preventDefault(event)
-    const originalEvent = (event as any).originalEvent ?? event
-    const text = originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
+    const text = event.clipboardData?.getData('text/plain').replace(/\r\n?/g, '\n') ?? ''
     const pos = save()
     insert(text)
     doHighlight(editor)
@@ -450,8 +449,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   function handleCut(event: ClipboardEvent) {
     const pos = save()
     const selection = getSelection()
-    const originalEvent = (event as any).originalEvent ?? event
-    originalEvent.clipboardData.setData('text/plain', selection.toString())
+    event.clipboardData?.setData('text/plain', selection.toString())
     document.execCommand('delete')
     doHighlight(editor)
     restore({
@@ -506,9 +504,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     document.execCommand('insertHTML', false, text)
   }
 
-  function debounce(cb: any, wait: number) {
+  function debounce<Args extends unknown[]>(cb: (...args: Args) => void, wait: number) {
     let timeout = 0
-    return (...args: any) => {
+    return (...args: Args) => {
       clearTimeout(timeout)
       timeout = window.setTimeout(() => cb(...args), wait)
     }
