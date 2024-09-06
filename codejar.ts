@@ -237,7 +237,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const text = toString()
     const before = text.slice(0, start)
     const after = text.slice(end)
-    return {before, after}
+    const within = text.slice(start, end)
+    return {before, after, within}
   }
 
   function handleNewLine(event: KeyboardEvent) {
@@ -303,25 +304,31 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function handleTabCharacters(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      event.preventDefault()
-      if (event.shiftKey) {
-        const {before} = aroundCursor()
-        const [padding, start] = findPadding(before)
-        if (padding.length > 0) {
-          const pos = save()
-          // Remove full length tab or just remaining padding
-          const len = Math.min(options.tab.length, padding.length)
-          restore({start, end: start + len})
-          insert('') // deletes the selection
-          pos.start -= len
-          pos.end -= len
-          restore(pos)
-        }
-      } else {
-        insert(options.tab)
-      }
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    const pos = save()
+    if (!event.shiftKey && pos.start === pos.end) {
+      insert(options.tab)
+      return
     }
+
+    let {before, after, within} = aroundCursor()
+
+    const i = Math.max(0, before.lastIndexOf('\n'))
+    const j = Math.min(Infinity, after.indexOf('\n'))
+    within = before.slice(i) + within + after.slice(0, j)
+    before = before.slice(0, i)
+    after = after.slice(j)
+
+    const replaced = event.shiftKey
+      ? within.replace(new RegExp(`^[\\t ]{0,${options.tab.length}}`, 'gm'), '')
+      : within.replace(/^/gm, options.tab)
+    editor.textContent = before + replaced + after
+
+    const len = replaced.length - within.length
+    pos.start += len
+    pos.end += len
+    restore(pos)
   }
 
   function handleUndoRedo(event: KeyboardEvent) {
