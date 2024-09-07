@@ -58,6 +58,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   if (editor.contentEditable !== 'plaintext-only') isLegacy = true
   if (isLegacy) editor.setAttribute('contenteditable', 'true')
 
+  recordHistory()
+
   const debounceHighlight = debounce(() => {
     const pos = save()
     highlight(editor, pos)
@@ -97,10 +99,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function save(): Position {
     const s = getSelection()
-    const pos: Position = {start: 0, end: 0, dir: undefined}
+    const pos: Position = {start: 0, end: 0}
 
     let {anchorNode, anchorOffset, focusNode, focusOffset} = s
-    if (!anchorNode || !focusNode) throw 'error1'
+    if (!anchorNode || !focusNode) return history[at]?.pos ?? pos
 
     // Selection anchor and focus are expected to be text nodes,
     // so normalize them.
@@ -277,14 +279,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (isLegacy && event.key === 'Enter') {
       event.preventDefault()
       event.stopPropagation()
-      if (aroundCursor().after === '') {
-        insert('\n ')
-        const pos = save()
-        pos.start = --pos.end
-        restore(pos)
-      } else {
-        insert('\n')
-      }
+      insert('\n')
     }
   }
 
@@ -407,8 +402,13 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   function insert(text: string) {
     let {start} = save()
     const {before, after} = aroundCursor()
-    editor.textContent = before + text + after
     start += text.length
+
+    // the last line break isn't shown and it can cause editing issues
+    // so, add an extra line break in order to avoid those issues
+    if (after === '' && text.endsWith('\n')) text += '\n'
+
+    editor.textContent = before + text + after
     restore({start, end: start})
   }
 
@@ -444,7 +444,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       Object.assign(options, newOptions)
     },
     updateCode(code: string, callOnUpdate: boolean = true) {
-      editor.textContent = code
+      recordHistory()
+      editor.textContent = ''
+      insert(code)
       highlight(editor)
       if (callOnUpdate) onUpdate(code)
     },
