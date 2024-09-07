@@ -42,12 +42,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   const window = options.window
   const document = window.document
 
-  const listeners: [string, any][] = []
+  const listeners: [keyof HTMLElementEventMap, (event: Event) => void][] = []
   const history: HistoryRecord[] = []
   let at = -1
-  let focus = false
-  let onUpdate: (code: string) => void | undefined = () => void 0
-  let prev: string // code content prior keydown event
+  let onUpdate: (code: string) => void = () => { }
 
   editor.setAttribute('contenteditable', 'plaintext-only')
   editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false')
@@ -56,104 +54,55 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   editor.style.overflowY = 'auto'
   editor.style.whiteSpace = 'pre-wrap'
 
-  const doHighlight = (editor: HTMLElement, pos?: Position) => {
-    highlight(editor, pos)
-  }
-
   let isLegacy = false // true if plaintext-only is not supported
   if (editor.contentEditable !== 'plaintext-only') isLegacy = true
   if (isLegacy) editor.setAttribute('contenteditable', 'true')
 
+  recordHistory()
+
   const debounceHighlight = debounce(() => {
     const pos = save()
-    doHighlight(editor, pos)
+    highlight(editor, pos)
     restore(pos)
   }, 30)
 
-  let recording = false
-  const shouldRecord = (event: KeyboardEvent): boolean => {
-    return !isUndo(event) && !isRedo(event)
-      && event.key !== 'Meta'
-      && event.key !== 'Control'
-      && event.key !== 'Alt'
-      && !event.key.startsWith('Arrow')
-  }
-  const debounceRecordHistory = debounce((event: KeyboardEvent) => {
-    if (shouldRecord(event)) {
-      recordHistory()
-      recording = false
-    }
-  }, 300)
+  const debounceRecordHistory = debounce(recordHistory, 300)
 
   const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
-    listeners.push([type, fn])
+    listeners.push([type, fn as (event: Event) => void])
     editor.addEventListener(type, fn)
   }
 
   on('keydown', event => {
     if (event.defaultPrevented) return
 
-    prev = toString()
     if (options.preserveIdent) handleNewLine(event)
     else legacyNewLineFix(event)
     if (options.catchTab) handleTabCharacters(event)
     if (options.addClosing) handleSelfClosingCharacters(event)
-    if (options.history) {
-      handleUndoRedo(event)
-      if (shouldRecord(event) && !recording) {
-        recordHistory()
-        recording = true
-      }
+    if (options.history) handleUndoRedo(event)
+
+    // 'defaultPrevented' means a change was made
+    if (event.defaultPrevented) {
+      const pos = save()
+      highlight(editor, pos)
+      restore(pos)
     }
-    if (isLegacy && !isCopy(event)) restore(save())
   })
 
-  on('keyup', event => {
+  on('input', event => {
     if (event.defaultPrevented) return
-    if (event.isComposing) return
-
-    if (prev !== toString()) debounceHighlight()
-    debounceRecordHistory(event)
-    onUpdate(toString())
-  })
-
-  on('focus', _event => {
-    focus = true
-  })
-
-  on('blur', _event => {
-    focus = false
-  })
-
-  on('paste', event => {
-    recordHistory()
-    handlePaste(event)
-    recordHistory()
-    onUpdate(toString())
-  })
-
-  on('cut', event => {
-    recordHistory()
-    handleCut(event)
-    recordHistory()
-    onUpdate(toString())
+    if ((event as InputEvent).isComposing) return
+    if (options.history) debounceRecordHistory()
+    debounceHighlight()
   })
 
   function save(): Position {
     const s = getSelection()
-    const pos: Position = {start: 0, end: 0, dir: undefined}
+    const pos: Position = {start: 0, end: 0}
 
     let {anchorNode, anchorOffset, focusNode, focusOffset} = s
-    if (!anchorNode || !focusNode) throw 'error1'
-
-    // If the anchor and focus are the editor element, return either a full
-    // highlight or a start/end cursor position depending on the selection
-    if (anchorNode === editor && focusNode === editor) {
-      pos.start = (anchorOffset > 0 && editor.textContent) ? editor.textContent.length : 0
-      pos.end = (focusOffset > 0 && editor.textContent) ? editor.textContent.length : 0
-      pos.dir = (focusOffset >= anchorOffset) ? '->' : '<-'
-      return pos
-    }
+    if (!anchorNode || !focusNode) return history[at]?.pos ?? pos
 
     // Selection anchor and focus are expected to be text nodes,
     // so normalize them.
@@ -195,8 +144,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       }
 
       if (el.nodeType === Node.TEXT_NODE) {
-        if (pos.dir != '->') pos.start += el.nodeValue!.length
-        if (pos.dir != '<-') pos.end += el.nodeValue!.length
+        if (pos.dir !== '->') pos.start += el.nodeValue!.length
+        if (pos.dir !== '<-') pos.end += el.nodeValue!.length
       }
     })
 
@@ -214,7 +163,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (pos.end < 0) pos.end = 0
 
     // Flip start and end if the direction reversed
-    if (pos.dir == '<-') {
+    if (pos.dir === '<-') {
       const {start, end} = pos
       pos.start = end
       pos.end = start
@@ -225,7 +174,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     visit(editor, el => {
       if (el.nodeType !== Node.TEXT_NODE) return
 
-      const len = (el.nodeValue || '').length
+      const len = el.nodeValue?.length ?? 0
       if (current + len > pos.start) {
         if (!startNode) {
           startNode = el
@@ -244,7 +193,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (!endNode) endNode = editor, endOffset = editor.childNodes.length
 
     // Flip back the selection
-    if (pos.dir == '<-') {
+    if (pos.dir === '<-') {
       [startNode, startOffset, endNode, endOffset] = [endNode, endOffset, startNode, startOffset]
     }
 
@@ -274,7 +223,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     while (node && node !== editor) {
       if (node.nodeType === Node.ELEMENT_NODE) {
         const el = node as Element
-        if (el.getAttribute('contenteditable') == 'false') {
+        if (el.getAttribute('contenteditable') === 'false') {
           return el
         }
       }
@@ -282,30 +231,23 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }
 
-  function beforeCursor() {
-    const s = getSelection()
-    const r0 = s.getRangeAt(0)
-    const r = document.createRange()
-    r.selectNodeContents(editor)
-    r.setEnd(r0.startContainer, r0.startOffset)
-    return r.toString()
-  }
-
-  function afterCursor() {
-    const s = getSelection()
-    const r0 = s.getRangeAt(0)
-    const r = document.createRange()
-    r.selectNodeContents(editor)
-    r.setStart(r0.endContainer, r0.endOffset)
-    return r.toString()
+  function aroundCursor() {
+    let {start, end, dir} = save()
+    if (dir === '<-') {
+      [start, end] = [end, start]
+    }
+    const text = toString()
+    const before = text.slice(0, start)
+    const after = text.slice(end)
+    const within = text.slice(start, end)
+    return {before, after, within}
   }
 
   function handleNewLine(event: KeyboardEvent) {
     if (event.key === 'Enter') {
-      const before = beforeCursor()
-      const after = afterCursor()
+      const {before, after} = aroundCursor()
 
-      let [padding] = findPadding(before)
+      const [padding] = findPadding(before)
       let newLinePadding = padding
 
       // If last symbol is "{" ident new line
@@ -315,7 +257,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
       // Preserve padding
       if (newLinePadding.length > 0) {
-        preventDefault(event)
+        event.preventDefault()
         event.stopPropagation()
         insert('\n' + newLinePadding)
       } else {
@@ -335,16 +277,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     // Firefox does not support plaintext-only mode
     // and puts <div><br></div> on Enter. Let's help.
     if (isLegacy && event.key === 'Enter') {
-      preventDefault(event)
+      event.preventDefault()
       event.stopPropagation()
-      if (afterCursor() == '') {
-        insert('\n ')
-        const pos = save()
-        pos.start = --pos.end
-        restore(pos)
-      } else {
-        insert('\n')
-      }
+      insert('\n')
     }
   }
 
@@ -352,9 +287,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     const open = `([{'"`
     const close = `)]}'"`
     if (open.includes(event.key)) {
-      preventDefault(event)
+      event.preventDefault()
       const pos = save()
-      const wrapText = pos.start == pos.end ? '' : getSelection().toString()
+      const wrapText = pos.start === pos.end ? '' : getSelection().toString()
       const text = event.key + wrapText + close[open.indexOf(event.key)]
       insert(text)
       pos.start++
@@ -364,30 +299,36 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function handleTabCharacters(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      preventDefault(event)
-      if (event.shiftKey) {
-        const before = beforeCursor()
-        let [padding, start] = findPadding(before)
-        if (padding.length > 0) {
-          const pos = save()
-          // Remove full length tab or just remaining padding
-          const len = Math.min(options.tab.length, padding.length)
-          restore({start, end: start + len})
-          document.execCommand('delete')
-          pos.start -= len
-          pos.end -= len
-          restore(pos)
-        }
-      } else {
-        insert(options.tab)
-      }
+    if (event.key !== 'Tab') return
+    event.preventDefault()
+    const pos = save()
+    if (!event.shiftKey && pos.start === pos.end) {
+      insert(options.tab)
+      return
     }
+
+    let {before, after, within} = aroundCursor()
+
+    const i = Math.max(0, before.lastIndexOf('\n'))
+    const j = Math.min(Infinity, after.indexOf('\n'))
+    within = before.slice(i) + within + after.slice(0, j)
+    before = before.slice(0, i)
+    after = after.slice(j)
+
+    const replaced = event.shiftKey
+      ? within.replace(new RegExp(`^[\\t ]{0,${options.tab.length}}`, 'gm'), '')
+      : within.replace(/^/gm, options.tab)
+    editor.textContent = before + replaced + after
+
+    const len = replaced.length - within.length
+    pos.start += len
+    pos.end += len
+    restore(pos)
   }
 
   function handleUndoRedo(event: KeyboardEvent) {
     if (isUndo(event)) {
-      preventDefault(event)
+      event.preventDefault()
       at--
       const record = history[at]
       if (record) {
@@ -397,7 +338,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       if (at < 0) at = 0
     }
     if (isRedo(event)) {
-      preventDefault(event)
+      event.preventDefault()
       at++
       const record = history[at]
       if (record) {
@@ -409,8 +350,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function recordHistory() {
-    if (!focus) return
-
     const html = editor.innerHTML
     const pos = save()
 
@@ -432,36 +371,6 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }
 
-  function handlePaste(event: ClipboardEvent) {
-    if (event.defaultPrevented) return
-    preventDefault(event)
-    const originalEvent = (event as any).originalEvent ?? event
-    const text = originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
-    const pos = save()
-    insert(text)
-    doHighlight(editor)
-    restore({
-      start: Math.min(pos.start, pos.end) + text.length,
-      end: Math.min(pos.start, pos.end) + text.length,
-      dir: '<-',
-    })
-  }
-
-  function handleCut(event: ClipboardEvent) {
-    const pos = save()
-    const selection = getSelection()
-    const originalEvent = (event as any).originalEvent ?? event
-    originalEvent.clipboardData.setData('text/plain', selection.toString())
-    document.execCommand('delete')
-    doHighlight(editor)
-    restore({
-      start: Math.min(pos.start, pos.end),
-      end: Math.min(pos.start, pos.end),
-      dir: '<-',
-    })
-    preventDefault(event)
-  }
-
   function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
     const queue: Node[] = []
     if (editor.firstChild) queue.push(editor.firstChild)
@@ -479,38 +388,35 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   }
 
   function isUndo(event: KeyboardEvent) {
-    return isCtrl(event) && !event.shiftKey && getKeyCode(event) === 'Z'
+    return isCtrl(event) && !event.shiftKey && getKey(event) === 'Z'
   }
 
   function isRedo(event: KeyboardEvent) {
-    return isCtrl(event) && event.shiftKey && getKeyCode(event) === 'Z'
+    return isCtrl(event) && event.shiftKey && getKey(event) === 'Z'
   }
 
-  function isCopy(event: KeyboardEvent) {
-    return isCtrl(event) && getKeyCode(event) === 'C'
-  }
-
-  function getKeyCode(event: KeyboardEvent): string | undefined {
-    let key = event.key || event.keyCode || event.which
-    if (!key) return undefined
-    return (typeof key === 'string' ? key : String.fromCharCode(key)).toUpperCase()
+  function getKey(event: KeyboardEvent): string | undefined {
+    return event.key.toUpperCase()
   }
 
   function insert(text: string) {
-    text = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-    document.execCommand('insertHTML', false, text)
+    let {start} = save()
+    const {before, after} = aroundCursor()
+    start += text.length
+
+    // the last line break isn't shown and it can cause editing issues
+    // so, add an extra line break in order to avoid those issues
+    if (after === '' && text.endsWith('\n')) text += '\n'
+
+    editor.textContent = before + text + after
+    restore({start, end: start})
   }
 
-  function debounce(cb: any, wait: number) {
+  function debounce<Args extends unknown[]>(cb: (...args: Args) => void, wait: number) {
     let timeout = 0
-    return (...args: any) => {
+    return (...args: Args) => {
       clearTimeout(timeout)
-      timeout = window.setTimeout(() => cb(...args), wait)
+      timeout = setTimeout(() => cb(...args), wait)
     }
   }
 
@@ -522,20 +428,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     // Find padding of the line.
     let j = i
     while (j < text.length && /[ \t]/.test(text[j])) j++
-    return [text.substring(i, j) || '', i, j]
+    return [text.substring(i, j), i, j]
   }
 
   function toString() {
-    return editor.textContent || ''
-  }
-
-  function preventDefault(event: Event) {
-    event.preventDefault()
+    return editor.textContent ?? ''
   }
 
   function getSelection() {
-    // @ts-ignore
-    return editor.getRootNode().getSelection() as Selection
+    return (editor.getRootNode() as Document).getSelection()!
   }
 
   return {
@@ -543,9 +444,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       Object.assign(options, newOptions)
     },
     updateCode(code: string, callOnUpdate: boolean = true) {
-      editor.textContent = code
-      doHighlight(editor)
-      callOnUpdate && onUpdate(code)
+      recordHistory()
+      editor.textContent = ''
+      insert(code)
+      highlight(editor)
+      if (callOnUpdate) onUpdate(code)
     },
     onUpdate(callback: (code: string) => void) {
       onUpdate = callback
@@ -555,7 +458,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     restore,
     recordHistory,
     destroy() {
-      for (let [type, fn] of listeners) {
+      for (const [type, fn] of listeners) {
         editor.removeEventListener(type, fn)
       }
     },
