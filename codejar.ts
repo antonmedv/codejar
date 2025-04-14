@@ -40,8 +40,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     addClosing: true,
     history: true,
     window: globalWindow,
-    autoclose: { 
-      open: `([{'"`, 
+    autoclose: {
+      open: `([{'"`,
       close: `)]}'"`
     },
     ...opt,
@@ -149,9 +149,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function save(): Position {
     const s = getSelection()
-    const pos: Position = {start: 0, end: 0, dir: undefined}
+    const pos: Position = { start: 0, end: 0, dir: undefined }
 
-    let {anchorNode, anchorOffset, focusNode, focusOffset} = s
+    let { anchorNode, anchorOffset, focusNode, focusOffset } = s
     if (!anchorNode || !focusNode) throw 'error1'
 
     // If the anchor and focus are the editor element, return either a full
@@ -223,7 +223,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     // Flip start and end if the direction reversed
     if (pos.dir == '<-') {
-      const {start, end} = pos
+      const { start, end } = pos
       pos.start = end
       pos.end = start
     }
@@ -381,7 +381,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
           const pos = save()
           // Remove full length tab or just remaining padding
           const len = Math.min(options.tab.length, padding.length)
-          restore({start, end: start + len})
+          restore({ start, end: start + len })
           document.execCommand('delete')
           pos.start -= len
           pos.end -= len
@@ -430,7 +430,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
 
     at++
-    history[at] = {html, pos}
+    history[at] = { html, pos }
     history.splice(at + 1)
 
     const maxHistory = 300
@@ -511,6 +511,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;')
+      .replace(/\n/g, '<br>')
     document.execCommand('insertHTML', false, text)
   }
 
