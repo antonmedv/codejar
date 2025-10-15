@@ -14,6 +14,8 @@ type Options = {
     open: string;
     close: string;
   }
+  bracketMatching: boolean
+  bracketMatchingClass: string
 }
 
 type HistoryRecord = {
@@ -44,6 +46,8 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       open: `([{'"`,
       close: `)]}'"`,
     },
+    bracketMatching: false,
+    bracketMatchingClass: 'matching',
     ...opt,
   }
 
@@ -57,6 +61,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   let onUpdate: (code: string) => void | undefined = () => void 0
   let prev: string // code content prior keydown event
 
+  // Variables for bracket matching
+  let bracketMap: Array<{pos: number, bracket: string, node: Element}> = []
+  let matchingMap: Record<number, number> = {}
+  let highlightedNodes: Element[] = [] // Nodes currently highlighted
+
   editor.setAttribute('contenteditable', 'plaintext-only')
   editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false')
   editor.style.outline = 'none'
@@ -66,6 +75,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   const doHighlight = (editor: HTMLElement, pos?: Position) => {
     highlight(editor, pos)
+    if (options.bracketMatching) {
+      bracketMap = getBracketMap()
+      matchingMap = buildMatchingMap(bracketMap)
+    }
   }
 
   const matchFirefoxVersion =
@@ -83,6 +96,78 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     doHighlight(editor, pos)
     restore(pos)
   }, 30)
+
+  // Debounced function for bracket matching
+  const debounceBracketMatching = debounce(() => {
+    if (!options.bracketMatching) return
+
+    // Clear previous highlights
+    highlightedNodes.forEach(node => node.classList.remove(options.bracketMatchingClass))
+    highlightedNodes = []
+
+    // Get current selection and ensure it's a single cursor position.
+    const s = getSelection()
+    if (s.rangeCount === 0) return
+    const range = s.getRangeAt(0)
+    if (!range.collapsed) return // Only highlight when there's a single caret
+
+    const pos = save()
+    const cursorPos = pos.start
+
+    // Determine which bracket pair to highlight based on VS Code–like behavior.
+    const pairPositions = findBracketPair(cursorPos)
+
+    if (pairPositions.length) {
+      for (const position of pairPositions) {
+        const bracket = bracketMap.find(b => b.pos === position)
+        if (bracket) {
+          bracket.node.classList.add(options.bracketMatchingClass)
+          highlightedNodes.push(bracket.node)
+        }
+      }
+    }
+  }, 30)
+
+  function findBracketPair(cursorPos: number): number[] {
+    // Check for adjacent brackets first.
+    const before = bracketMap.find(b => b.pos === cursorPos - 1)
+    const after = bracketMap.find(b => b.pos === cursorPos)
+
+    // If a closing bracket is immediately after the cursor, prefer that.
+    if (after && '}])'.includes(after.bracket)) {
+      const match = matchingMap[after.pos]
+      if (match !== undefined) {
+        return [match, after.pos]
+      }
+    }
+    // Otherwise, if an opening bracket is immediately before the cursor, use that.
+    if (before && '{[('.includes(before.bracket)) {
+      const match = matchingMap[before.pos]
+      if (match !== undefined) {
+        return [before.pos, match]
+      }
+    }
+
+    // If no adjacent bracket is found, search for an enclosing pair.
+    let candidate: {open: number, close: number} | null = null
+    for (const b of bracketMap) {
+      if ('{[('.includes(b.bracket)) {
+        const openPos = b.pos
+        const closePos = matchingMap[openPos]
+        // Check if the cursor lies strictly between the opening and closing bracket.
+        if (openPos < cursorPos && closePos > cursorPos) {
+          // Choose the innermost (closest) enclosing pair.
+          if (!candidate || openPos > candidate.open) {
+            candidate = { open: openPos, close: closePos }
+          }
+        }
+      }
+    }
+    if (candidate) {
+      return [candidate.open, candidate.close]
+    }
+    return []
+  }
 
   let recording = false
   const shouldRecord = (event: KeyboardEvent): boolean => {
@@ -152,6 +237,12 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     recordHistory()
     onUpdate(toString())
   })
+
+  // Add bracket matching listeners if enabled
+  if (options.bracketMatching) {
+    on('keyup', debounceBracketMatching)
+    on('mouseup', debounceBracketMatching)
+  }
 
   function save(): Position {
     const s = getSelection()
@@ -480,6 +571,62 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       dir: '<-',
     })
     preventDefault(event)
+  }
+
+  function getBracketMap(): Array<{pos: number, bracket: string, node: Element}> {
+    const brackets: Array<{pos: number, bracket: string, node: Element}> = []
+    let pos = 0
+
+    function traverse(node: Node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        pos += node.nodeValue?.length || 0
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // If it's a SPAN and qualifies as a bracket token.
+        if (node.nodeName === 'SPAN' && node.childNodes.length === 1 && node.firstChild?.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent
+          if (text?.length === 1 && '{[()]}'.includes(text)) {
+            brackets.push({ pos, bracket: text, node: node as Element })
+            pos += 1
+            return // Skip traversing children, we've handled the token.
+          }
+        }
+        // For non-bracket elements or multi-character spans, traverse children.
+        for (let i = 0; i < node.childNodes.length; i++) {
+          traverse(node.childNodes[i])
+        }
+      }
+    }
+
+    traverse(editor)
+    return brackets
+  }
+
+  function buildMatchingMap(brackets: Array<{pos: number, bracket: string, node: Element}>): Record<number, number> {
+    const matching: Record<number, number> = {}
+    const stack: Array<{pos: number, bracket: string, node: Element}> = []
+    const bracketPairs: Record<string, string> = {
+      '(': ')',
+      '[': ']',
+      '{': '}'
+    }
+
+    for (const bracket of brackets) {
+      if (bracket.bracket in bracketPairs) {
+        // Opening bracket: push it onto the stack.
+        stack.push(bracket)
+      } else {
+        // Closing bracket: iterate backward in the stack to find a matching opening bracket.
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (bracketPairs[stack[i].bracket] === bracket.bracket) {
+            const openBracket = stack.splice(i, 1)[0]
+            matching[openBracket.pos] = bracket.pos
+            matching[bracket.pos] = openBracket.pos
+            break
+          }
+        }
+      }
+    }
+    return matching
   }
 
   function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
