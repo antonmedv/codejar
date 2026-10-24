@@ -35,9 +35,9 @@ Second argument to `CodeJar` is a highlighting function (like Prism.js, highligh
 
 ```ts
 const highlight = (editor: HTMLElement) => {
-  const code = editor.textContent
-  code = code.replace('foo', '<span style="color: red">foo</span>')
-  editor.innerHTML = code
+  const code = editor.textContent || ''
+  const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  editor.innerHTML = escapedCode.replace('foo', '<span style="color: red">foo</span>')
 }
 
 const jar = CodeJar(editor, highlight)
