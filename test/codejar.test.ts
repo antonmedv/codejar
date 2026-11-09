@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { userEvent } from 'vitest/browser'
-import { CodeJar, type Options } from '../src/codejar'
+import { CodeJar, type Options, type Position } from '../src/codejar'
 
 const escape = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -109,6 +109,34 @@ describe('typing', () => {
   })
 })
 
+describe('enter', () => {
+  test('at the end of the text adds no stray characters', async () => {
+    setup('abc')
+    await focusAt(3)
+    await userEvent.keyboard('{Enter}')
+    await wait(100)
+    expect(jar.save()).toMatchObject({ start: 4, end: 4 })
+    await userEvent.keyboard('x')
+    expect(jar.toString()).toBe('abc\nx')
+    await userEvent.keyboard('{Enter}y')
+    expect(jar.toString()).toBe('abc\nx\ny')
+  })
+
+  test('in the middle of a line', async () => {
+    setup('abcd')
+    await focusAt(2)
+    await userEvent.keyboard('{Enter}')
+    expect(jar.toString()).toBe('ab\ncd')
+  })
+
+  test('keeps an existing trailing newline', async () => {
+    setup('a\n')
+    await focusAt(1)
+    await userEvent.keyboard('b')
+    expect(jar.toString()).toBe('ab\n')
+  })
+})
+
 describe('auto-closing', () => {
   test('closes brackets and places the caret inside', async () => {
     setup()
@@ -137,6 +165,21 @@ describe('auto-closing', () => {
     await focusAt(0)
     await userEvent.keyboard('<(')
     expect(jar.toString()).toBe('<(>')
+  })
+
+  test('ignores Ctrl/Cmd shortcuts', async () => {
+    setup('x')
+    await focusAt(1)
+    await userEvent.keyboard('{Control>}[[{/Control}')
+    await userEvent.keyboard('{Meta>}({/Meta}')
+    expect(jar.toString()).toBe('x')
+  })
+
+  test('works with AltGr (Ctrl+Alt)', async () => {
+    setup()
+    await focusAt(0)
+    await userEvent.keyboard('{Control>}{Alt>}[[{/Alt}{/Control}')
+    expect(jar.toString()).toBe('[]')
   })
 
   test('can be disabled', async () => {
@@ -185,6 +228,37 @@ describe('tab key', () => {
     expect(jar.toString()).toBe('  x')
   })
 
+  test('outdents with the caret inside the indentation', async () => {
+    setup('    x', { tab: '  ' })
+    await focusAt(1)
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    expect(jar.toString()).toBe('  x')
+    expect(jar.save()).toMatchObject({ start: 0, end: 0 })
+  })
+
+  test('indents all selected lines', async () => {
+    setup('a\nb\nc', { tab: '  ' })
+    await focusAt(0, 3) // "a\nb"
+    await userEvent.keyboard('{Tab}')
+    expect(jar.toString()).toBe('  a\n  b\nc')
+    expect(jar.save()).toEqual({ start: 0, end: 7, dir: '->' })
+  })
+
+  test('outdents all selected lines', async () => {
+    setup('  a\n    b\nc\n  d', { tab: '  ' })
+    await focusAt(1, 15) // from inside line 1 to the end of the text
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    expect(jar.toString()).toBe('a\n  b\nc\nd')
+    expect(jar.save()).toEqual({ start: 0, end: 9, dir: '->' })
+  })
+
+  test('does not indent a line where the selection only touches its start', async () => {
+    setup('a\nb', { tab: '  ' })
+    await focusAt(0, 2) // "a\n", ends at the start of "b"
+    await userEvent.keyboard('{Tab}')
+    expect(jar.toString()).toBe('  a\nb')
+  })
+
   test('is ignored when catchTab is false', async () => {
     setup('x', { catchTab: false })
     await focusAt(0)
@@ -194,6 +268,27 @@ describe('tab key', () => {
 })
 
 describe('history', () => {
+  test('undo right after typing, then redo', async () => {
+    setup()
+    await focusAt(0)
+    await userEvent.keyboard('abc')
+    await userEvent.keyboard('{Control>}z{/Control}')
+    expect(jar.toString()).toBe('')
+    await userEvent.keyboard('{Control>}{Shift>}z{/Shift}{/Control}')
+    expect(jar.toString()).toBe('abc')
+  })
+
+  test('works when the element is focused before init', async () => {
+    editor.setAttribute('contenteditable', 'true')
+    editor.focus()
+    setup()
+    jar.restore({ start: 0, end: 0 })
+    await userEvent.keyboard('abc')
+    await wait(400)
+    await userEvent.keyboard('{Control>}z{/Control}')
+    expect(jar.toString()).toBe('')
+  })
+
   test('undo and redo', async () => {
     setup()
     await focusAt(0)
@@ -207,6 +302,74 @@ describe('history', () => {
 })
 
 describe('save and restore', () => {
+  test('restore() does not mutate its argument', async () => {
+    setup('let x = 1')
+    await userEvent.click(editor)
+    const pos: Position = { start: 6, end: 1, dir: '<-' }
+    jar.restore(pos)
+    jar.restore(pos)
+    expect(pos).toEqual({ start: 6, end: 1, dir: '<-' })
+    expect(jar.save()).toEqual({ start: 6, end: 1, dir: '<-' })
+  })
+
+  test('save() with the selection on the editor element', async () => {
+    setup('let x')
+    await userEvent.click(editor)
+    // Children: <span>let</span>, " x". Put the caret between them.
+    getSelection()!.setBaseAndExtent(editor, 1, editor, 1)
+    expect(jar.save()).toMatchObject({ start: 3, end: 3 })
+  })
+
+  test('save() does not change the DOM', async () => {
+    setup('let x')
+    await userEvent.click(editor)
+    getSelection()!.setBaseAndExtent(editor, 1, editor, 1)
+    const html = editor.innerHTML
+    const count = editor.childNodes.length
+    jar.save()
+    expect(editor.innerHTML).toBe(html)
+    expect(editor.childNodes.length).toBe(count)
+  })
+
+  // Every position restored over random nested markup must save back
+  // unchanged.
+  test('round-trips random positions over random markup', async () => {
+    let seed = 42
+    const rand = (n: number) => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff
+      return seed % n
+    }
+    const wrap = (s: string): string => {
+      if (s.length < 2 || rand(3) === 0) return escape(s)
+      const i = 1 + rand(s.length - 1)
+      const [open, close] = rand(2)
+        ? ['<span>', '</span>']
+        : ['<b><i>', '</i></b>']
+      return open + wrap(s.slice(0, i)) + close + wrap(s.slice(i))
+    }
+    setup()
+    await userEvent.click(editor)
+    const failures: string[] = []
+    for (let round = 0; round < 60; round++) {
+      let code = ''
+      for (let i = 0, n = 1 + rand(20); i < n; i++) code += 'ab \n{}<'[rand(8)]
+      editor.innerHTML = wrap(code)
+      for (let k = 0; k < 10; k++) {
+        const start = rand(code.length + 1)
+        const end = rand(code.length + 1)
+        const dir = start <= end ? '->' : '<-'
+        jar.restore({ start, end, dir })
+        const got = jar.save()
+        if (got.start !== start || got.end !== end || got.dir !== dir) {
+          failures.push(
+            `${editor.innerHTML}: ${start},${end} -> ${got.start},${got.end}`,
+          )
+        }
+      }
+    }
+    expect(failures).toEqual([])
+  })
+
   test('round-trips a caret across highlighted nodes', async () => {
     setup('let x = 1')
     await focusAt(5)
@@ -243,6 +406,26 @@ describe('clipboard', () => {
     expect(onUpdate).toHaveBeenLastCalledWith('<b>let a = <b>')
   })
 
+  test('cut with nothing selected changes nothing', async () => {
+    setup('hello')
+    await focusAt(0, 5)
+    await userEvent.copy()
+    jar.restore({ start: 5, end: 5 })
+    await userEvent.cut()
+    expect(jar.toString()).toBe('hello')
+    await userEvent.paste() // the clipboard still holds "hello"
+    expect(jar.toString()).toBe('hellohello')
+  })
+
+  test('pastes multiple lines', async () => {
+    setup('a\nb')
+    await focusAt(0, 3)
+    await userEvent.copy()
+    jar.restore({ start: 3, end: 3 })
+    await userEvent.paste()
+    expect(jar.toString()).toBe('a\nba\nb')
+  })
+
   test('cuts the selection', async () => {
     setup('hello world')
     await focusAt(0, 6)
@@ -276,6 +459,12 @@ describe('clipboard', () => {
 })
 
 describe('options and lifecycle', () => {
+  test('updateOptions updates spellcheck', () => {
+    setup()
+    jar.updateOptions({ spellcheck: true })
+    expect(editor.getAttribute('spellcheck')).toBe('true')
+  })
+
   test('updateOptions changes behavior at runtime', async () => {
     setup()
     jar.updateOptions({ addClosing: false })

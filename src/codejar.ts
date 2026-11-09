@@ -56,9 +56,12 @@ export function CodeJar(
   const timeouts = new Set<number>() // pending debounced calls
   const history: HistoryRecord[] = []
   let at = -1
-  let focus = false
+  // The element may already have focus, e.g. with autofocus.
+  let focus =
+    (editor.getRootNode() as Document | ShadowRoot).activeElement === editor
   let onUpdate: (code: string) => void | undefined = () => void 0
   let prev: string // code content prior keydown event
+  let sentinel = false // an extra trailing newline was added on Enter
 
   editor.setAttribute('contenteditable', 'plaintext-only')
   editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false')
@@ -135,6 +138,7 @@ export function CodeJar(
     if (event.defaultPrevented) return
     if (event.isComposing) return
 
+    if (sentinel) removeSentinel()
     if (prev !== toString()) debounceHighlight()
     debounceRecordHistory(event)
     onUpdate(toString())
@@ -164,72 +168,29 @@ export function CodeJar(
 
   function save(): Position {
     const s = getSelection()
-    const pos: Position = { start: 0, end: 0, dir: undefined }
-
-    let { anchorNode, anchorOffset, focusNode, focusOffset } = s
+    const { anchorNode, anchorOffset, focusNode, focusOffset } = s
     if (!anchorNode || !focusNode) throw 'error1'
 
-    // If the anchor and focus are the editor element, return either a full
-    // highlight or a start/end cursor position depending on the selection
-    if (anchorNode === editor && focusNode === editor) {
-      pos.start =
-        anchorOffset > 0 && editor.textContent ? editor.textContent.length : 0
-      pos.end =
-        focusOffset > 0 && editor.textContent ? editor.textContent.length : 0
-      pos.dir = focusOffset >= anchorOffset ? '->' : '<-'
-      return pos
-    }
-
-    // Selection anchor and focus are expected to be text nodes,
-    // so normalize them.
-    if (anchorNode.nodeType === Node.ELEMENT_NODE) {
-      const node = document.createTextNode('')
-      anchorNode.insertBefore(node, anchorNode.childNodes[anchorOffset])
-      anchorNode = node
-      anchorOffset = 0
-    }
-    if (focusNode.nodeType === Node.ELEMENT_NODE) {
-      const node = document.createTextNode('')
-      focusNode.insertBefore(node, focusNode.childNodes[focusOffset])
-      focusNode = node
-      focusOffset = 0
-    }
-
-    visit(editor, (el) => {
-      if (el === anchorNode && el === focusNode) {
-        pos.start += anchorOffset
-        pos.end += focusOffset
-        pos.dir = anchorOffset <= focusOffset ? '->' : '<-'
-        return 'stop'
-      }
-
-      if (el === anchorNode) {
-        pos.start += anchorOffset
-        if (!pos.dir) {
-          pos.dir = '->'
-        } else {
-          return 'stop'
-        }
-      } else if (el === focusNode) {
-        pos.end += focusOffset
-        if (!pos.dir) {
-          pos.dir = '<-'
-        } else {
-          return 'stop'
-        }
-      }
-
-      if (el.nodeType === Node.TEXT_NODE) {
-        if (pos.dir != '->') pos.start += el.nodeValue!.length
-        if (pos.dir != '<-') pos.end += el.nodeValue!.length
-      }
-    })
-
-    editor.normalize() // collapse empty text nodes
-    return pos
+    const start = textOffset(anchorNode, anchorOffset)
+    const end = textOffset(focusNode, focusOffset)
+    return { start, end, dir: start <= end ? '->' : '<-' }
   }
 
-  function restore(pos: Position) {
+  // Number of characters of code before the given DOM position.
+  function textOffset(node: Node, offset: number): number {
+    if (!editor.contains(node)) {
+      const after =
+        editor.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING
+      return after ? toString().length : 0
+    }
+    const range = document.createRange()
+    range.selectNodeContents(editor)
+    range.setEnd(node, offset)
+    return range.toString().length
+  }
+
+  function restore(position: Position) {
+    const pos = { ...position }
     const s = getSelection()
     let startNode: Node | undefined,
       startOffset = 0
@@ -376,20 +337,45 @@ export function CodeJar(
       preventDefault(event)
       event.stopPropagation()
       if (afterCursor() == '') {
-        insert('\n ')
+        // A trailing newline doesn't render a new line, so the caret would
+        // stay on the previous one. Add a second newline (like Chrome does)
+        // and put the caret between them.
+        insert('\n\n')
         const pos = save()
         pos.start = --pos.end
         restore(pos)
+        sentinel = true
       } else {
         insert('\n')
       }
     }
   }
 
+  // Removes the extra newline added by legacyNewLineFix once the last line
+  // has text, as it no longer needs the newline to render.
+  function removeSentinel() {
+    const code = toString()
+    if (!code.endsWith('\n')) {
+      sentinel = false
+      return
+    }
+    if (!getSelection().isCollapsed) return
+    const pos = save()
+    // Wait until the caret is at the end of a non-empty last line.
+    if (pos.start !== code.length - 1 || code[code.length - 2] === '\n') return
+    restore({ start: code.length - 1, end: code.length })
+    document.execCommand('delete')
+    restore(pos)
+    sentinel = false
+  }
+
   function handleSelfClosingCharacters(event: KeyboardEvent) {
     const open = options.autoclose.open
     const close = options.autoclose.close
-    if (open.includes(event.key)) {
+    // Leave shortcuts like Ctrl+[ alone. Ctrl+Alt is AltGr on Windows,
+    // which some layouts need to type brackets.
+    if (event.metaKey || (event.ctrlKey && !event.altKey)) return
+    if (event.key.length === 1 && open.includes(event.key)) {
       preventDefault(event)
       const pos = save()
       const wrapText = pos.start == pos.end ? '' : getSelection().toString()
@@ -402,30 +388,75 @@ export function CodeJar(
   }
 
   function handleTabCharacters(event: KeyboardEvent) {
-    if (event.key === 'Tab') {
-      preventDefault(event)
-      if (event.shiftKey) {
-        const before = beforeCursor()
-        let [padding, start] = findPadding(before)
-        if (padding.length > 0) {
-          const pos = save()
-          // Remove full length tab or just remaining padding
-          const len = Math.min(options.tab.length, padding.length)
-          restore({ start, end: start + len })
-          document.execCommand('delete')
-          pos.start -= len
-          pos.end -= len
-          restore(pos)
-        }
-      } else {
-        insert(options.tab)
-      }
+    if (event.key !== 'Tab') return
+    preventDefault(event)
+    if (event.shiftKey) {
+      indentLines(false)
+    } else if (getSelection().toString().includes('\n')) {
+      indentLines(true)
+    } else {
+      insert(options.tab)
     }
+  }
+
+  // Indents or outdents every line touched by the selection.
+  function indentLines(indent: boolean) {
+    const code = toString()
+    const pos = save()
+    const from = Math.min(pos.start, pos.end)
+    let to = Math.max(pos.start, pos.end)
+    // A selection ending at the very start of a line doesn't include it.
+    if (to > from && code[to - 1] === '\n') to--
+
+    const blockStart = code.lastIndexOf('\n', from - 1) + 1
+    let blockEnd = code.indexOf('\n', to)
+    if (blockEnd < 0) blockEnd = code.length
+
+    const lines = code.slice(blockStart, blockEnd).split('\n')
+    // Characters added (positive) or removed (negative) at each line start.
+    const deltas = lines.map((line) =>
+      indent
+        ? options.tab.length
+        : -Math.min(options.tab.length, /^[ \t]*/.exec(line)![0].length),
+    )
+    if (deltas.every((d) => d === 0)) return
+
+    const block = lines
+      .map((line, i) => (indent ? options.tab + line : line.slice(-deltas[i])))
+      .join('\n')
+
+    // Moves a position by the change in its own line and all lines above.
+    const move = (p: number) => {
+      let lineStart = blockStart
+      let shift = 0
+      for (let i = 0; i < lines.length; i++) {
+        const lineEnd = lineStart + lines[i].length
+        if (p <= lineEnd) {
+          const column = p - lineStart
+          if (indent) return p + shift + (column > 0 ? deltas[i] : 0)
+          return p + shift - Math.min(column, -deltas[i])
+        }
+        shift += deltas[i]
+        lineStart = lineEnd + 1
+      }
+      return p + shift
+    }
+
+    restore({ start: blockStart, end: blockEnd })
+    insert(block)
+    // Keep the caret and selection on the same code; a selection that
+    // starts at a line start stays there so the whole line remains selected.
+    restore({ start: move(pos.start), end: move(pos.end), dir: pos.dir })
   }
 
   function handleUndoRedo(event: KeyboardEvent) {
     if (isUndo(event)) {
       preventDefault(event)
+      // Save keystrokes that haven't been recorded yet, so they can be redone.
+      if (recording) {
+        recordHistory()
+        recording = false
+      }
       at--
       const record = history[at]
       if (record) {
@@ -491,8 +522,10 @@ export function CodeJar(
   }
 
   function handleCut(event: ClipboardEvent) {
-    const pos = save()
+    if (event.defaultPrevented) return
     const selection = getSelection()
+    if (selection.isCollapsed) return // nothing to cut
+    const pos = save()
     const originalEvent = (event as any).originalEvent ?? event
     originalEvent.clipboardData.setData('text/plain', selection.toString())
     document.execCommand('delete')
@@ -594,6 +627,7 @@ export function CodeJar(
   return {
     updateOptions(newOptions: Partial<Options>) {
       Object.assign(options, newOptions)
+      editor.setAttribute('spellcheck', options.spellcheck ? 'true' : 'false')
     },
     updateCode(code: string, callOnUpdate: boolean = true) {
       editor.textContent = code
