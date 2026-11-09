@@ -20,14 +20,8 @@
   <body>
     <header class="hero">
       <nav class="nav">
-        <a class="brand" href="./">
-          <img src="./logo.svg" alt="" width="22" height="28" />
-          CodeJar
-        </a>
         <div class="nav-links">
-          <a href="#how">How it works</a>
-          <a href="#usage">Usage</a>
-          <a href="#api">API</a>
+          <a href="#docs">Docs</a>
           <a href="https://github.com/antonmedv/codejar">GitHub</a>
           <button
             class="icon-button"
@@ -53,9 +47,8 @@
           <span>for the browser.</span>
         </h1>
         <p class="lead">
-          Type straight into highlighted code. Tiny, zero dependencies, bring
-          your own highlighter: Prism.js, highlight.js, Shiki — or a few lines
-          of regex.
+          Tiny (~3&nbsp;kB), no dependencies. Type straight into highlighted
+          code, with any highlighter.
         </p>
         <div class="install">
           <code id="install-cmd">npm i codejar</code>
@@ -70,9 +63,7 @@
       <section class="playground" aria-label="Live editor">
         <div class="window">
           <div class="window-bar">
-            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
             <div class="tabs" role="tablist" id="lang-tabs"></div>
-            <button class="reset" type="button" id="reset">Reset</button>
           </div>
           <div class="window-body">
             <div
@@ -81,11 +72,6 @@
               data-gramm="false"
               aria-label="Code editor"
             ></div>
-          </div>
-          <div class="window-status">
-            <span id="status-pos">Ln 1, Col 1</span>
-            <span id="status-lang">JavaScript</span>
-            <span id="status-size">0 chars</span>
           </div>
         </div>
 
@@ -132,46 +118,18 @@
         </aside>
       </section>
 
-      <section class="features">
-        <div class="feature">
-          <h3>Tiny</h3>
-          <p>About 3&nbsp;kB gzipped. No dependencies, no build step needed.</p>
-        </div>
-        <div class="feature">
-          <h3>Any highlighter</h3>
-          <p>
-            Pass a function that colors the element — Prism, highlight.js, or
-            your own.
-          </p>
-        </div>
-        <div class="feature">
-          <h3>Smart editing</h3>
-          <p>
-            Keeps indentation, auto-closes brackets and quotes, indents with
-            <kbd>Tab</kbd>.
-          </p>
-        </div>
-        <div class="feature">
-          <h3>Undo &amp; redo</h3>
-          <p>Built-in history that restores both the code and the cursor.</p>
-        </div>
-      </section>
-
       <section id="how" class="how">
         <div class="how-intro">
           <h2>How it works</h2>
           <p>
-            Most small browser code editors use two layers: a transparent
-            <code>&lt;textarea&gt;</code> for typing, laid over a
-            <code>&lt;pre&gt;</code> that shows the colors. The two must share
-            exactly the same font, padding, wrapping and scroll position, or the
-            caret drifts away from the text.
-          </p>
-          <p>
-            CodeJar has only one layer. The highlighted element itself is
-            <code>contenteditable</code>. After each change CodeJar saves the
-            caret, lets your highlighter re-render the HTML, and puts the caret
-            back in the same place.
+            Most small editors lay a transparent
+            <code>&lt;textarea&gt;</code> over a highlighted
+            <code>&lt;pre&gt;</code>. Both must match exactly, or the caret
+            drifts. CodeJar makes the highlighted element itself
+            <code>contenteditable</code>: it saves the caret, lets your
+            highlighter re-render, and restores the caret. Tokens can be styled
+            freely and long lines wrap naturally. Turn on
+            <em>Outline tokens</em> above to see the elements you type into.
           </p>
         </div>
 
@@ -211,41 +169,9 @@
             </figcaption>
           </figure>
         </div>
-
-        <ul class="benefits">
-          <li>
-            <h3>You edit the highlighted code</h3>
-            <p>
-              No hidden textarea to keep in sync, and nothing to drift out of
-              line.
-            </p>
-          </li>
-          <li>
-            <h3>Style tokens any way you like</h3>
-            <p>
-              Bold, italic, other font sizes and backgrounds all work: no second
-              layer has to match the layout.
-            </p>
-          </li>
-          <li>
-            <h3>Wrapping just works</h3>
-            <p>Long lines wrap the way the browser wraps them.</p>
-          </li>
-          <li>
-            <h3>The highlighter sees the caret</h3>
-            <p>
-              After typing it gets the cursor position, so it can, for example,
-              highlight the matching bracket.
-            </p>
-          </li>
-        </ul>
-        <p class="how-note">
-          Turn on <em>Outline tokens</em> in the playground above: every
-          outlined token is an element you are typing into.
-        </p>
       </section>
 
-      <section id="usage" class="docs">
+      <section id="docs" class="docs">
         <h2>Usage</h2>
         <pre
           class="snippet"
@@ -253,48 +179,64 @@
         ><code>import { CodeJar } from 'codejar'
 import Prism from 'prismjs'
 
-const highlight = (editor) => {
+const jar = CodeJar(document.querySelector('.editor'), (editor) => {
   editor.innerHTML = Prism.highlight(
     editor.textContent,
-    Prism.languages.javascript,
-    'javascript',
+    Prism.languages.js,
+    'js',
   )
-}
-
-const jar = CodeJar(document.querySelector('.editor'), highlight, {
-  tab: '  ',
-})
-
-jar.onUpdate((code) => console.log(code))</code></pre>
+})</code></pre>
         <p>
-          Give the element a monospace font and <code>white-space</code> is
-          handled for you. Use the CSS <code>tab-size</code> property to control
-          how tabs render.
+          The second argument is your highlighter: it gets the element and
+          rewrites its HTML. Give the element a monospace font; use CSS
+          <code>tab-size</code> to size tabs.
         </p>
-      </section>
 
-      <section id="api" class="docs">
+        <h2>Options</h2>
+        <p>Passed as the third argument.</p>
+        <dl class="api">
+          <dt><code>tab</code> = <code>'\t'</code></dt>
+          <dd>String inserted on <kbd>Tab</kbd>.</dd>
+          <dt><code>indentOn</code> = <code>/[({[]$/</code></dt>
+          <dd>Indent the new line if the text before the caret matches.</dd>
+          <dt><code>moveToNewLine</code> = <code>/^[)}\]]/</code></dt>
+          <dd>Move the text after the caret to its own line if it matches.</dd>
+          <dt><code>spellcheck</code> = <code>false</code></dt>
+          <dd>Enable the browser spellchecker.</dd>
+          <dt><code>catchTab</code> = <code>true</code></dt>
+          <dd>Handle <kbd>Tab</kbd> and <kbd>Shift</kbd>+<kbd>Tab</kbd>.</dd>
+          <dt><code>preserveIdent</code> = <code>true</code></dt>
+          <dd>Keep indentation on a new line.</dd>
+          <dt><code>addClosing</code> = <code>true</code></dt>
+          <dd>Auto-close brackets and quotes.</dd>
+          <dt>
+            <code>autoclose</code> =
+            <code>{ open: `([{'"`, close: `)]}'"` }</code>
+          </dt>
+          <dd>Pairs to auto-close.</dd>
+          <dt><code>history</code> = <code>true</code></dt>
+          <dd>Undo and redo.</dd>
+          <dt><code>window</code> = <code>window</code></dt>
+          <dd>Window to use, e.g. for iframes.</dd>
+        </dl>
+
         <h2>API</h2>
         <dl class="api">
           <dt><code>updateCode(code, callOnUpdate = true)</code></dt>
-          <dd>Replace the editor contents.</dd>
+          <dd>Set the code.</dd>
           <dt><code>updateOptions(options)</code></dt>
-          <dd>Change options on the fly.</dd>
+          <dd>Change options.</dd>
           <dt><code>onUpdate(callback)</code></dt>
-          <dd>Called with the new code after every change.</dd>
+          <dd>Called with the code on every change.</dd>
           <dt><code>toString()</code></dt>
-          <dd>Get the current code.</dd>
+          <dd>Get the code.</dd>
           <dt><code>save()</code> / <code>restore(pos)</code></dt>
-          <dd>Save and restore the cursor position or selection.</dd>
+          <dd>Save and restore the caret or selection.</dd>
           <dt><code>recordHistory()</code></dt>
           <dd>Push the current state onto the undo stack.</dd>
           <dt><code>destroy()</code></dt>
-          <dd>Remove all event listeners.</dd>
+          <dd>Remove event listeners.</dd>
         </dl>
-        <p>
-          Full documentation is in the
-          <a href="https://github.com/antonmedv/codejar#readme">README</a>.
-        </p>
       </section>
     </main>
 
@@ -302,7 +244,6 @@ jar.onUpdate((code) => console.log(code))</code></pre>
       <span>MIT License</span>
       <a href="https://github.com/antonmedv/codejar">GitHub</a>
       <a href="https://www.npmjs.com/package/codejar">npm</a>
-      <a href="https://medv.io">Anton Medvedev</a>
     </footer>
 
     <script type="module" src="./main.ts"></script>

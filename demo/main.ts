@@ -79,38 +79,17 @@ const highlight = (el: HTMLElement) => {
 
 const jar = CodeJar(editor, highlight, { tab: '  ' })
 
-function renderStatus() {
-  const code = jar.toString()
-  $('#status-size').textContent = `${code.length} chars`
-  $('#status-lang').textContent = current.name
-  // Measure the text up to the caret (the selection focus) with a Range,
-  // instead of jar.save(), which mutates the DOM.
-  const selection = getSelection()
-  const focus = selection?.focusNode
-  if (!focus || !editor.contains(focus)) return
-  const range = document.createRange()
-  range.selectNodeContents(editor)
-  range.setEnd(focus, selection.focusOffset)
-  const before = range.toString().split('\n')
-  $('#status-pos').textContent =
-    `Ln ${before.length}, Col ${before[before.length - 1].length + 1}`
-}
-
-jar.onUpdate((code) => {
-  storage.set(`codejar:code:${current.id}`, code)
-  renderStatus()
+const optOutline = $<HTMLInputElement>('#opt-outline')
+optOutline.addEventListener('change', () => {
+  editor.classList.toggle('show-tokens', optOutline.checked)
 })
-document.addEventListener('selectionchange', renderStatus)
 
 function select(sample: Sample) {
   current = sample
   for (const tab of tabs.children) {
     tab.setAttribute('aria-selected', String(tab.id === `tab-${sample.id}`))
   }
-  editor.className = `editor language-${sample.grammar}`
-  editor.classList.toggle('show-tokens', optOutline.checked)
-  jar.updateCode(storage.get(`codejar:code:${sample.id}`) ?? sample.code)
-  storage.set('codejar:lang', sample.id)
+  jar.updateCode(sample.code)
 }
 
 for (const sample of samples) {
@@ -123,11 +102,6 @@ for (const sample of samples) {
   tab.addEventListener('click', () => select(sample))
   tabs.append(tab)
 }
-
-$('#reset').addEventListener('click', () => {
-  jar.updateCode(current.code)
-  editor.focus()
-})
 
 // Options panel
 const optTab = $<HTMLSelectElement>('#opt-tab')
@@ -149,15 +123,7 @@ for (const name of toggles) {
   const input = $<HTMLInputElement>(`#opt-${name}`)
   input.addEventListener('change', () => {
     jar.updateOptions({ [name]: input.checked })
-    if (name === 'spellcheck') {
-      editor.spellcheck = input.checked
-    }
   })
 }
 
-const optOutline = $<HTMLInputElement>('#opt-outline')
-optOutline.addEventListener('change', () => {
-  editor.classList.toggle('show-tokens', optOutline.checked)
-})
-
-select(samples.find((s) => s.id === storage.get('codejar:lang')) ?? samples[0])
+select(samples[0])

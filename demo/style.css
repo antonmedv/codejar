@@ -144,7 +144,6 @@ button {
 }
 
 /* Hero */
-
 .hero {
   background:
     radial-gradient(
@@ -161,21 +160,8 @@ button {
   padding: 20px 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 18px;
-  color: var(--text);
-}
-
-.brand:hover {
-  text-decoration: none;
 }
 
 .nav-links {
@@ -282,7 +268,6 @@ h1 span {
 }
 
 /* Layout */
-
 main {
   max-width: 1120px;
   margin: 0 auto;
@@ -290,7 +275,6 @@ main {
 }
 
 /* Playground */
-
 .playground {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
@@ -313,19 +297,6 @@ main {
   padding: 0 10px 0 16px;
   background: var(--code-bar);
   border-bottom: 1px solid var(--border);
-}
-
-.dots {
-  display: flex;
-  gap: 7px;
-  flex: none;
-}
-
-.dots i {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--border);
 }
 
 .tabs {
@@ -356,20 +327,6 @@ main {
   border-bottom-color: var(--accent);
 }
 
-.reset {
-  flex: none;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.reset:hover {
-  color: var(--text);
-}
-
 .window-body {
   display: flex;
   height: 440px;
@@ -388,23 +345,7 @@ main {
   caret-color: var(--accent);
 }
 
-.window-status {
-  display: flex;
-  gap: 18px;
-  padding: 6px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--code-bar);
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 12px;
-}
-
-.window-status span:first-child {
-  margin-right: auto;
-}
-
 /* Options */
-
 .options {
   padding: 20px;
   border: 1px solid var(--border);
@@ -460,34 +401,9 @@ input[type='checkbox'] {
 
 /* Features */
 
-.features {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin: 64px 0;
-}
-
-.feature {
-  padding: 20px;
-  border-radius: 14px;
-  background: var(--bg-soft);
-}
-
-.feature h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-
-.feature p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-
 /* How it works */
-
 .how {
-  margin: 0 0 72px;
+  margin: 72px 0;
 }
 
 .how-intro {
@@ -646,40 +562,6 @@ input[type='checkbox'] {
   color: var(--text);
 }
 
-.benefits {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin: 0 0 16px;
-  padding: 0;
-  list-style: none;
-}
-
-.benefits li {
-  padding: 20px;
-  border-radius: 14px;
-  background: var(--bg-soft);
-}
-
-.benefits h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-
-.benefits p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-
-.how-note {
-  max-width: 760px;
-  margin: 0 auto;
-  text-align: center;
-  color: var(--muted);
-  font-size: 15px;
-}
-
 /* Playground: outline every highlighted token */
 .editor.show-tokens .token {
   outline: 1px dashed var(--accent);
@@ -688,10 +570,13 @@ input[type='checkbox'] {
 }
 
 /* Docs */
-
 .docs {
   max-width: 760px;
   margin: 0 auto 56px;
+}
+
+.docs h2:not(:first-child) {
+  margin-top: 48px;
 }
 
 .docs h2 {
@@ -753,7 +638,6 @@ input[type='checkbox'] {
 }
 
 /* Prism tokens */
-
 .token.comment,
 .token.prolog,
 .token.doctype,
@@ -816,15 +700,9 @@ input[type='checkbox'] {
 }
 
 /* Responsive */
-
 @media (max-width: 900px) {
   .playground {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .features,
-  .benefits {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .compare {
@@ -841,24 +719,10 @@ input[type='checkbox'] {
 }
 
 @media (max-width: 560px) {
-  .nav-links a:not([href^='https']) {
-    display: none;
-  }
-
-  .features,
-  .benefits {
-    grid-template-columns: 1fr;
-  }
-
   .window-body {
     height: 360px;
     font-size: 13px;
   }
-
-  .dots {
-    display: none;
-  }
-
   .install {
     max-width: 100%;
   }
