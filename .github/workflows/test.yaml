@@ -22,3 +22,33 @@ jobs:
       - name: Smoke test
         run: node --input-type=module -e "const m = await import('codejar'); if (typeof m.CodeJar !== 'function') process.exit(1)"
       - run: npm run build:demo
+
+  browser:
+    name: browser (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+    env:
+      BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Install browser
+        run: npx playwright install --with-deps "$BROWSER"
+      - name: Run tests
+        run: npm test -- --project "$BROWSER"
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screenshots-${{ matrix.browser }}
+          path: .vitest/attachments
+          if-no-files-found: ignore

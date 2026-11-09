@@ -53,6 +53,7 @@ export function CodeJar(
   const document = window.document
 
   const listeners: [string, any][] = []
+  const timeouts = new Set<number>() // pending debounced calls
   const history: HistoryRecord[] = []
   let at = -1
   let focus = false
@@ -556,8 +557,13 @@ export function CodeJar(
   function debounce(cb: any, wait: number) {
     let timeout = 0
     return (...args: any) => {
-      clearTimeout(timeout)
-      timeout = window.setTimeout(() => cb(...args), wait)
+      window.clearTimeout(timeout)
+      timeouts.delete(timeout)
+      timeout = window.setTimeout(() => {
+        timeouts.delete(timeout)
+        cb(...args)
+      }, wait)
+      timeouts.add(timeout)
     }
   }
 
@@ -605,6 +611,8 @@ export function CodeJar(
       for (let [type, fn] of listeners) {
         editor.removeEventListener(type, fn)
       }
+      for (const timeout of timeouts) window.clearTimeout(timeout)
+      timeouts.clear()
     },
   }
 }

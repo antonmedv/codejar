@@ -203,10 +203,12 @@ import { CodeJar, type Options, type Position } from 'codejar'
 
 ```sh
 npm ci
+npx playwright install chromium firefox  # once, for tests
 npm run dev        # demo page with hot reload
 npm run build      # build the library into dist/
 npm run build:demo # build the demo page into site/
 npm run typecheck  # type-check with tsc
+npm test           # run tests in Chromium and Firefox (Vitest browser mode)
 npm run lint       # lint with oxlint
 npm run fmt        # format with oxfmt
 ```

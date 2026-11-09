@@ -25,15 +25,20 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "test:workflow": "uvx zizmor@1.32.0 .github/workflows -v -p --min-severity=medium",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/prismjs": "^1.26.6",
+    "@vitest/browser-playwright": "^5.1.0",
     "oxfmt": "^0.78.0",
     "oxlint": "^1.93.0",
+    "playwright": "^1.65.0",
     "prismjs": "^1.30.0",
     "typescript": "^7.0.2",
-    "vite": "^8.3.7"
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
   },
   "keywords": [
     "editor",
