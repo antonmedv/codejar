@@ -1,6 +1,6 @@
 {
   "name": "codejar",
-  "version": "4.3.0",
+  "version": "5.0.0",
   "description": "An embeddable code editor for the browser",
   "type": "module",
   "main": "./dist/codejar.js",
@@ -9,7 +9,7 @@
   "exports": {
     ".": {
       "types": "./dist/codejar.d.ts",
-      "import": "./dist/codejar.js"
+      "default": "./dist/codejar.js"
     },
     "./package.json": "./package.json"
   },

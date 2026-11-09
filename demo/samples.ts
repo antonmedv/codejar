@@ -121,7 +121,7 @@ print(Hive(bees=500).harvest(days=7))
   "name": "my-editor",
   "type": "module",
   "dependencies": {
-    "codejar": "^4.3.0",
+    "codejar": "^5.0.0",
     "prismjs": "^1.30.0"
   }
 }

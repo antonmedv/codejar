@@ -19,8 +19,10 @@ jobs:
       - run: npm run build
       - name: Check package contents
         run: npm pack --dry-run
-      - name: Smoke test
+      - name: Smoke test (import)
         run: node --input-type=module -e "const m = await import('codejar'); if (typeof m.CodeJar !== 'function') process.exit(1)"
+      - name: Smoke test (require)
+        run: node -e "if (typeof require('codejar').CodeJar !== 'function') process.exit(1)"
       - run: npm run build:demo
 
   browser:
