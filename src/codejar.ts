@@ -1,6 +1,4 @@
-const globalWindow = window
-
-type Options = {
+export type Options = {
   tab: string
   indentOn: RegExp
   moveToNewLine: RegExp
@@ -11,8 +9,8 @@ type Options = {
   history: boolean
   window: typeof window
   autoclose: {
-    open: string;
-    close: string;
+    open: string
+    close: string
   }
 }
 
@@ -29,17 +27,21 @@ export type Position = {
 
 export type CodeJar = ReturnType<typeof CodeJar>
 
-export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: Position) => void, opt: Partial<Options> = {}) {
+export function CodeJar(
+  editor: HTMLElement,
+  highlight: (e: HTMLElement, pos?: Position) => void,
+  opt: Partial<Options> = {},
+) {
   const options: Options = {
     tab: '\t',
-    indentOn: /[({\[]$/,
+    indentOn: /[({[]$/,
     moveToNewLine: /^[)}\]]/,
     spellcheck: false,
     catchTab: true,
     preserveIdent: true,
     addClosing: true,
     history: true,
-    window: globalWindow,
+    window: globalThis.window,
     autoclose: {
       open: `([{'"`,
       close: `)]}'"`,
@@ -86,11 +88,14 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   let recording = false
   const shouldRecord = (event: KeyboardEvent): boolean => {
-    return !isUndo(event) && !isRedo(event)
-      && event.key !== 'Meta'
-      && event.key !== 'Control'
-      && event.key !== 'Alt'
-      && !event.key.startsWith('Arrow')
+    return (
+      !isUndo(event) &&
+      !isRedo(event) &&
+      event.key !== 'Meta' &&
+      event.key !== 'Control' &&
+      event.key !== 'Alt' &&
+      !event.key.startsWith('Arrow')
+    )
   }
   const debounceRecordHistory = debounce((event: KeyboardEvent) => {
     if (shouldRecord(event)) {
@@ -99,12 +104,15 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     }
   }, 300)
 
-  const on = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void) => {
+  const on = <K extends keyof HTMLElementEventMap>(
+    type: K,
+    fn: (event: HTMLElementEventMap[K]) => void,
+  ) => {
     listeners.push([type, fn])
     editor.addEventListener(type, fn)
   }
 
-  on('keydown', event => {
+  on('keydown', (event) => {
     if (event.defaultPrevented) return
 
     prev = toString()
@@ -122,7 +130,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (isLegacy && !isCopy(event)) restore(save())
   })
 
-  on('keyup', event => {
+  on('keyup', (event) => {
     if (event.defaultPrevented) return
     if (event.isComposing) return
 
@@ -131,22 +139,22 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     onUpdate(toString())
   })
 
-  on('focus', _event => {
+  on('focus', (_event) => {
     focus = true
   })
 
-  on('blur', _event => {
+  on('blur', (_event) => {
     focus = false
   })
 
-  on('paste', event => {
+  on('paste', (event) => {
     recordHistory()
     handlePaste(event)
     recordHistory()
     onUpdate(toString())
   })
 
-  on('cut', event => {
+  on('cut', (event) => {
     recordHistory()
     handleCut(event)
     recordHistory()
@@ -163,9 +171,11 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     // If the anchor and focus are the editor element, return either a full
     // highlight or a start/end cursor position depending on the selection
     if (anchorNode === editor && focusNode === editor) {
-      pos.start = (anchorOffset > 0 && editor.textContent) ? editor.textContent.length : 0
-      pos.end = (focusOffset > 0 && editor.textContent) ? editor.textContent.length : 0
-      pos.dir = (focusOffset >= anchorOffset) ? '->' : '<-'
+      pos.start =
+        anchorOffset > 0 && editor.textContent ? editor.textContent.length : 0
+      pos.end =
+        focusOffset > 0 && editor.textContent ? editor.textContent.length : 0
+      pos.dir = focusOffset >= anchorOffset ? '->' : '<-'
       return pos
     }
 
@@ -184,7 +194,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
       focusOffset = 0
     }
 
-    visit(editor, el => {
+    visit(editor, (el) => {
       if (el === anchorNode && el === focusNode) {
         pos.start += anchorOffset
         pos.end += focusOffset
@@ -220,8 +230,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
   function restore(pos: Position) {
     const s = getSelection()
-    let startNode: Node | undefined, startOffset = 0
-    let endNode: Node | undefined, endOffset = 0
+    let startNode: Node | undefined,
+      startOffset = 0
+    let endNode: Node | undefined,
+      endOffset = 0
 
     if (!pos.dir) pos.dir = '->'
     if (pos.start < 0) pos.start = 0
@@ -236,7 +248,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     let current = 0
 
-    visit(editor, el => {
+    visit(editor, (el) => {
       if (el.nodeType !== Node.TEXT_NODE) return
 
       const len = (el.nodeValue || '').length
@@ -265,7 +277,12 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     // Flip back the selection
     if (pos.dir == '<-') {
-      [startNode, startOffset, endNode, endOffset] = [endNode, endOffset, startNode, startOffset]
+      ;[startNode, startOffset, endNode, endOffset] = [
+        endNode,
+        endOffset,
+        startNode,
+        startOffset,
+      ]
     }
 
     {
@@ -436,9 +453,12 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
 
     const lastRecord = history[at]
     if (lastRecord) {
-      if (lastRecord.html === html
-        && lastRecord.pos.start === pos.start
-        && lastRecord.pos.end === pos.end) return
+      if (
+        lastRecord.html === html &&
+        lastRecord.pos.start === pos.start &&
+        lastRecord.pos.end === pos.end
+      )
+        return
     }
 
     at++
@@ -456,7 +476,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     if (event.defaultPrevented) return
     preventDefault(event)
     const originalEvent = (event as any).originalEvent ?? event
-    const text = originalEvent.clipboardData.getData('text/plain').replace(/\r\n?/g, '\n')
+    const text = originalEvent.clipboardData
+      .getData('text/plain')
+      .replace(/\r\n?/g, '\n')
     const pos = save()
     insert(text)
     doHighlight(editor)
@@ -482,7 +504,10 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     preventDefault(event)
   }
 
-  function visit(editor: HTMLElement, visitor: (el: Node) => 'stop' | undefined) {
+  function visit(
+    editor: HTMLElement,
+    visitor: (el: Node) => 'stop' | undefined,
+  ) {
     const queue: Node[] = []
     if (editor.firstChild) queue.push(editor.firstChild)
     let el = queue.pop()
@@ -513,7 +538,9 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
   function getKeyCode(event: KeyboardEvent): string | undefined {
     let key = event.key || event.keyCode || event.which
     if (!key) return undefined
-    return (typeof key === 'string' ? key : String.fromCharCode(key)).toUpperCase()
+    return (
+      typeof key === 'string' ? key : String.fromCharCode(key)
+    ).toUpperCase()
   }
 
   function insert(text: string) {
@@ -565,7 +592,7 @@ export function CodeJar(editor: HTMLElement, highlight: (e: HTMLElement, pos?: P
     updateCode(code: string, callOnUpdate: boolean = true) {
       editor.textContent = code
       doHighlight(editor)
-      callOnUpdate && onUpdate(code)
+      if (callOnUpdate) onUpdate(code)
     },
     onUpdate(callback: (code: string) => void) {
       onUpdate = callback

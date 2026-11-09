@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
-    "lib": [
-      "ES2021",
-      "DOM"
-    ],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [],
     "strict": true,
-    "declaration": true,
     "noUnusedLocals": true,
-    "outDir": "./dist",
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true
   },
-  "include": [
-    "**/*.ts"
-  ],
+  "include": ["src", "demo", "vite.config.ts"]
 }

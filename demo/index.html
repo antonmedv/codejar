@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CodeJar – an embeddable code editor for the browser</title>
+    <meta
+      name="description"
+      content="CodeJar is a tiny, dependency-free code editor for the browser. Bring your own syntax highlighter."
+    />
+    <link rel="icon" href="./logo.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <nav class="nav">
+        <a class="brand" href="./">
+          <img src="./logo.svg" alt="" width="22" height="28" />
+          CodeJar
+        </a>
+        <div class="nav-links">
+          <a href="#usage">Usage</a>
+          <a href="#api">API</a>
+          <a href="https://github.com/antonmedv/codejar">GitHub</a>
+          <button
+            class="icon-button"
+            id="theme-toggle"
+            type="button"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                fill="currentColor"
+                d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1Z"
+              />
+            </svg>
+          </button>
+        </div>
+      </nav>
+
+      <div class="hero-body">
+        <img class="hero-logo" src="./logo.svg" alt="CodeJar logo" />
+        <h1>
+          An embeddable code editor<br />
+          <span>for the browser.</span>
+        </h1>
+        <p class="lead">
+          Tiny, zero dependencies, bring your own highlighter. Works with
+          Prism.js, highlight.js, Shiki — or a few lines of regex.
+        </p>
+        <div class="install">
+          <code id="install-cmd">npm i codejar</code>
+          <button class="copy" type="button" data-copy="#install-cmd">
+            Copy
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="playground" aria-label="Live editor">
+        <div class="window">
+          <div class="window-bar">
+            <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="tabs" role="tablist" id="lang-tabs"></div>
+            <button class="reset" type="button" id="reset">Reset</button>
+          </div>
+          <div class="window-body">
+            <div class="gutter" id="gutter" aria-hidden="true"></div>
+            <div
+              class="editor"
+              id="editor"
+              data-gramm="false"
+              aria-label="Code editor"
+            ></div>
+          </div>
+          <div class="window-status">
+            <span id="status-pos">Ln 1, Col 1</span>
+            <span id="status-lang">JavaScript</span>
+            <span id="status-size">0 chars</span>
+          </div>
+        </div>
+
+        <aside class="options" aria-label="Editor options">
+          <h2>Options</h2>
+          <label class="field">
+            <span>Indent</span>
+            <select id="opt-tab">
+              <option value="  ">2 spaces</option>
+              <option value="    ">4 spaces</option>
+              <option value="&#9;">Tab</option>
+            </select>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-addClosing" checked />
+            <span>Auto-close brackets</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-preserveIdent" checked />
+            <span>Preserve indent</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-catchTab" checked />
+            <span>Catch <kbd>Tab</kbd></span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-history" checked />
+            <span>Undo / redo history</span>
+          </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-spellcheck" />
+            <span>Spellcheck</span>
+          </label>
+          <p class="hint">
+            Try <kbd>Enter</kbd> after <code>{</code>, <kbd>Shift</kbd>+<kbd
+              >Tab</kbd
+            >
+            to outdent, select text and type <code>(</code> to wrap it.
+          </p>
+        </aside>
+      </section>
+
+      <section class="features">
+        <div class="feature">
+          <h3>Tiny</h3>
+          <p>About 3&nbsp;kB gzipped. No dependencies, no build step needed.</p>
+        </div>
+        <div class="feature">
+          <h3>Any highlighter</h3>
+          <p>
+            Pass a function that colors the element — Prism, highlight.js, or
+            your own.
+          </p>
+        </div>
+        <div class="feature">
+          <h3>Smart editing</h3>
+          <p>
+            Keeps indentation, auto-closes brackets and quotes, indents with
+            <kbd>Tab</kbd>.
+          </p>
+        </div>
+        <div class="feature">
+          <h3>Undo &amp; redo</h3>
+          <p>Built-in history that restores both the code and the cursor.</p>
+        </div>
+      </section>
+
+      <section id="usage" class="docs">
+        <h2>Usage</h2>
+        <pre
+          class="snippet"
+          data-lang="javascript"
+        ><code>import { CodeJar } from 'codejar'
+import Prism from 'prismjs'
+
+const highlight = (editor) => {
+  editor.innerHTML = Prism.highlight(
+    editor.textContent,
+    Prism.languages.javascript,
+    'javascript',
+  )
+}
+
+const jar = CodeJar(document.querySelector('.editor'), highlight, {
+  tab: '  ',
+})
+
+jar.onUpdate((code) => console.log(code))</code></pre>
+        <p>
+          Give the element a monospace font and <code>white-space</code> is
+          handled for you. Use the CSS <code>tab-size</code> property to control
+          how tabs render.
+        </p>
+      </section>
+
+      <section id="api" class="docs">
+        <h2>API</h2>
+        <dl class="api">
+          <dt><code>updateCode(code, callOnUpdate = true)</code></dt>
+          <dd>Replace the editor contents.</dd>
+          <dt><code>updateOptions(options)</code></dt>
+          <dd>Change options on the fly.</dd>
+          <dt><code>onUpdate(callback)</code></dt>
+          <dd>Called with the new code after every change.</dd>
+          <dt><code>toString()</code></dt>
+          <dd>Get the current code.</dd>
+          <dt><code>save()</code> / <code>restore(pos)</code></dt>
+          <dd>Save and restore the cursor position or selection.</dd>
+          <dt><code>recordHistory()</code></dt>
+          <dd>Push the current state onto the undo stack.</dd>
+          <dt><code>destroy()</code></dt>
+          <dd>Remove all event listeners.</dd>
+        </dl>
+        <p>
+          Full documentation is in the
+          <a href="https://github.com/antonmedv/codejar#readme">README</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>MIT License</span>
+      <a href="https://github.com/antonmedv/codejar">GitHub</a>
+      <a href="https://www.npmjs.com/package/codejar">npm</a>
+      <a href="https://medv.io">Anton Medvedev</a>
+    </footer>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
