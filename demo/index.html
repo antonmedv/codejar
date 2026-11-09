@@ -25,6 +25,7 @@
           CodeJar
         </a>
         <div class="nav-links">
+          <a href="#how">How it works</a>
           <a href="#usage">Usage</a>
           <a href="#api">API</a>
           <a href="https://github.com/antonmedv/codejar">GitHub</a>
@@ -52,8 +53,9 @@
           <span>for the browser.</span>
         </h1>
         <p class="lead">
-          Tiny, zero dependencies, bring your own highlighter. Works with
-          Prism.js, highlight.js, Shiki — or a few lines of regex.
+          Type straight into highlighted code. Tiny, zero dependencies, bring
+          your own highlighter: Prism.js, highlight.js, Shiki — or a few lines
+          of regex.
         </p>
         <div class="install">
           <code id="install-cmd">npm i codejar</code>
@@ -117,6 +119,10 @@
             <input type="checkbox" id="opt-spellcheck" />
             <span>Spellcheck</span>
           </label>
+          <label class="toggle">
+            <input type="checkbox" id="opt-outline" />
+            <span>Outline tokens</span>
+          </label>
           <p class="hint">
             Try <kbd>Enter</kbd> after <code>{</code>, <kbd>Shift</kbd>+<kbd
               >Tab</kbd
@@ -149,6 +155,94 @@
           <h3>Undo &amp; redo</h3>
           <p>Built-in history that restores both the code and the cursor.</p>
         </div>
+      </section>
+
+      <section id="how" class="how">
+        <div class="how-intro">
+          <h2>How it works</h2>
+          <p>
+            Most small browser code editors use two layers: a transparent
+            <code>&lt;textarea&gt;</code> for typing, laid over a
+            <code>&lt;pre&gt;</code> that shows the colors. The two must share
+            exactly the same font, padding, wrapping and scroll position, or the
+            caret drifts away from the text.
+          </p>
+          <p>
+            CodeJar has only one layer. The highlighted element itself is
+            <code>contenteditable</code>. After each change CodeJar saves the
+            caret, lets your highlighter re-render the HTML, and puts the caret
+            back in the same place.
+          </p>
+        </div>
+
+        <div class="compare">
+          <figure class="approach">
+            <div class="stack" aria-hidden="true">
+              <div class="layer layer-pre">
+                <span class="tag">&lt;pre&gt;</span>
+                <code
+                  ><span class="t-kw">const</span> jar =
+                  <span class="t-fn">CodeJar</span>()</code
+                >
+              </div>
+              <div class="layer layer-textarea">
+                <span class="tag">&lt;textarea&gt;</span>
+                <code>const jar = CodeJar()<i class="caret"></i></code>
+              </div>
+            </div>
+            <figcaption>
+              <strong>Two layers.</strong> You type into an invisible textarea
+              and look at a copy. Every style has to match on both layers.
+            </figcaption>
+          </figure>
+          <figure class="approach approach-codejar">
+            <div class="stack" aria-hidden="true">
+              <div class="layer layer-single">
+                <span class="tag">&lt;div contenteditable&gt;</span>
+                <code
+                  ><span class="t-kw">const</span> jar =
+                  <span class="t-fn">CodeJar</span>()<i class="caret"></i
+                ></code>
+              </div>
+            </div>
+            <figcaption>
+              <strong>CodeJar.</strong> One element. You type directly into the
+              highlighted <code>&lt;span&gt;</code>s.
+            </figcaption>
+          </figure>
+        </div>
+
+        <ul class="benefits">
+          <li>
+            <h3>You edit the highlighted code</h3>
+            <p>
+              No hidden textarea to keep in sync, and nothing to drift out of
+              line.
+            </p>
+          </li>
+          <li>
+            <h3>Style tokens any way you like</h3>
+            <p>
+              Bold, italic, other font sizes and backgrounds all work: no second
+              layer has to match the layout.
+            </p>
+          </li>
+          <li>
+            <h3>Wrapping just works</h3>
+            <p>Long lines wrap the way the browser wraps them.</p>
+          </li>
+          <li>
+            <h3>The highlighter sees the caret</h3>
+            <p>
+              After typing it gets the cursor position, so it can, for example,
+              highlight the matching bracket.
+            </p>
+          </li>
+        </ul>
+        <p class="how-note">
+          Turn on <em>Outline tokens</em> in the playground above: every
+          outlined token is an element you are typing into.
+        </p>
       </section>
 
       <section id="usage" class="docs">

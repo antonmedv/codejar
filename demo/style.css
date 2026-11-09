@@ -484,6 +484,209 @@ input[type='checkbox'] {
   font-size: 15px;
 }
 
+/* How it works */
+
+.how {
+  margin: 0 0 72px;
+}
+
+.how-intro {
+  max-width: 760px;
+  margin: 0 auto 32px;
+}
+
+.how h2 {
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+
+.how-intro p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.approach {
+  margin: 0;
+  padding: 28px 24px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.approach-codejar {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.stack {
+  position: relative;
+  height: 124px;
+  margin-bottom: 20px;
+}
+
+.layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 62px;
+  padding: 26px 14px 0;
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.layer code {
+  font-size: inherit;
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+.tag {
+  position: absolute;
+  top: 6px;
+  left: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* The textarea floats above the <pre>, slightly offset to show the two
+   layers drifting apart. */
+.layer-pre {
+  top: 56px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+}
+
+.layer-textarea {
+  top: 0;
+  transform: translate(10px, 6px);
+  border: 1.5px dashed var(--muted);
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.layer-pre .tag {
+  top: auto;
+  bottom: 6px;
+  left: auto;
+  right: 14px;
+}
+
+.layer-textarea .tag {
+  color: var(--muted);
+}
+
+.layer-single {
+  top: 31px;
+  background: var(--code-bg);
+  border: 1.5px solid var(--accent);
+}
+
+.t-kw {
+  color: var(--tok-keyword);
+}
+
+.t-fn {
+  color: var(--tok-function);
+}
+
+.t-kw,
+.t-fn {
+  outline: 1px dashed var(--accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.layer-pre .t-kw,
+.layer-pre .t-fn {
+  outline: 0;
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+}
+
+.approach figcaption {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.approach figcaption strong {
+  color: var(--text);
+}
+
+.benefits {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.benefits li {
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--bg-soft);
+}
+
+.benefits h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.benefits p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.how-note {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* Playground: outline every highlighted token */
+.editor.show-tokens .token {
+  outline: 1px dashed var(--accent);
+  outline-offset: 0;
+  border-radius: 2px;
+}
+
 /* Docs */
 
 .docs {
@@ -619,8 +822,21 @@ input[type='checkbox'] {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .features {
+  .features,
+  .benefits {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .compare {
+    grid-template-columns: 1fr;
+  }
+
+  .approach-codejar .stack {
+    height: 62px;
+  }
+
+  .approach-codejar .layer-single {
+    top: 0;
   }
 }
 
@@ -629,7 +845,8 @@ input[type='checkbox'] {
     display: none;
   }
 
-  .features {
+  .features,
+  .benefits {
     grid-template-columns: 1fr;
   }
 

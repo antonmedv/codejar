@@ -108,6 +108,7 @@ function select(sample: Sample) {
     tab.setAttribute('aria-selected', String(tab.id === `tab-${sample.id}`))
   }
   editor.className = `editor language-${sample.grammar}`
+  editor.classList.toggle('show-tokens', optOutline.checked)
   jar.updateCode(storage.get(`codejar:code:${sample.id}`) ?? sample.code)
   storage.set('codejar:lang', sample.id)
 }
@@ -153,5 +154,10 @@ for (const name of toggles) {
     }
   })
 }
+
+const optOutline = $<HTMLInputElement>('#opt-outline')
+optOutline.addEventListener('change', () => {
+  editor.classList.toggle('show-tokens', optOutline.checked)
+})
 
 select(samples.find((s) => s.id === storage.get('codejar:lang')) ?? samples[0])
