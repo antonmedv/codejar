@@ -66,7 +66,6 @@ for (const pre of document.querySelectorAll<HTMLElement>('.snippet')) {
 
 // Live editor
 const editor = $('#editor')
-const gutter = $('#gutter')
 const tabs = $('#lang-tabs')
 let current: Sample = samples[0]
 
@@ -79,20 +78,6 @@ const highlight = (el: HTMLElement) => {
 }
 
 const jar = CodeJar(editor, highlight, { tab: '  ' })
-// Don't wrap lines, so the line-number gutter stays aligned.
-editor.style.whiteSpace = 'pre'
-editor.style.overflowWrap = 'normal'
-
-let gutterLines = 0
-function renderGutter(code: string) {
-  const lines = Math.max(
-    code.split('\n').length - (code.endsWith('\n') ? 1 : 0),
-    1,
-  )
-  if (lines === gutterLines) return
-  gutterLines = lines
-  gutter.textContent = Array.from({ length: lines }, (_, i) => i + 1).join('\n')
-}
 
 function renderStatus() {
   const code = jar.toString()
@@ -113,7 +98,6 @@ function renderStatus() {
 
 jar.onUpdate((code) => {
   storage.set(`codejar:code:${current.id}`, code)
-  renderGutter(code)
   renderStatus()
 })
 document.addEventListener('selectionchange', renderStatus)

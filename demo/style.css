@@ -12,7 +12,6 @@
   --shadow: 0 1px 2px rgb(42 31 45 / 6%), 0 12px 40px -12px rgb(42 31 45 / 18%);
 
   --code-bg: #ffffff;
-  --code-gutter: #b9adbb;
   --code-bar: #faf5ef;
   --tok-comment: #8c8190;
   --tok-keyword: #9d42ad;
@@ -44,7 +43,6 @@
     --accent-text: #dfa3e8;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 48px -16px rgb(0 0 0 / 60%);
     --code-bg: #1a141d;
-    --code-gutter: #5d5161;
     --code-bar: #221a26;
     --tok-comment: #7e7282;
     --tok-keyword: #d991e4;
@@ -72,7 +70,6 @@
   --accent-text: #dfa3e8;
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 16px 48px -16px rgb(0 0 0 / 60%);
   --code-bg: #1a141d;
-  --code-gutter: #5d5161;
   --code-bar: #221a26;
   --tok-comment: #7e7282;
   --tok-keyword: #d991e4;
@@ -382,22 +379,10 @@ main {
   line-height: 1.65;
 }
 
-.gutter {
-  position: sticky;
-  left: 0;
-  flex: none;
-  min-width: 52px;
-  padding: 16px 12px 16px 0;
-  text-align: right;
-  color: var(--code-gutter);
-  background: var(--code-bg);
-  white-space: pre;
-  user-select: none;
-}
-
 .editor {
-  flex: 1 0 auto;
-  padding: 16px 16px 16px 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 16px 20px;
   color: var(--text);
   tab-size: 2;
   caret-color: var(--accent);

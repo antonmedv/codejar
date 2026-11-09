@@ -3,7 +3,6 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/codejar"><img src="https://img.shields.io/npm/v/codejar?color=9d42ad" alt="npm"></a>
-  <a href="https://bundlephobia.com/package/codejar"><img src="https://img.shields.io/bundlephobia/minzip/codejar?label=size&color=9d42ad" alt="bundle size"></a>
   <a href="https://github.com/antonmedv/codejar/actions/workflows/test.yaml"><img src="https://github.com/antonmedv/codejar/actions/workflows/test.yaml/badge.svg" alt="test"></a>
 </p>
 
