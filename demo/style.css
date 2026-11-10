@@ -469,7 +469,7 @@ input[type='checkbox'] {
   padding: 0;
 }
 
-.tag {
+.layer-label {
   position: absolute;
   top: 6px;
   left: 14px;
@@ -494,14 +494,14 @@ input[type='checkbox'] {
   color: color-mix(in srgb, var(--muted) 45%, transparent);
 }
 
-.layer-pre .tag {
+.layer-pre .layer-label {
   top: auto;
   bottom: 6px;
   left: auto;
   right: 14px;
 }
 
-.layer-textarea .tag {
+.layer-textarea .layer-label {
   color: var(--muted);
 }
 
